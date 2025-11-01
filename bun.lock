@@ -4,6 +4,7 @@
     "": {
       "name": "acadxp-backend",
       "dependencies": {
+        "@neylorxt/generate-unique-key": "^1.0.0",
         "@prisma/client": "^6.18.0",
         "dotenv": "^17.2.3",
         "express": "^5.1.0",
@@ -21,6 +22,8 @@
     },
   },
   "packages": {
+    "@neylorxt/generate-unique-key": ["@neylorxt/generate-unique-key@1.0.0", "", {}, "sha512-4iYQi0thcEMkAQHr3ty5ImCH6qE8D3qz6jU2aJbPF5ZEQ451/3cbsom4ihTk2T92S9VZnDjDOo7e7xQvve/0KQ=="],
+
     "@prisma/client": ["@prisma/client@6.18.0", "", { "peerDependencies": { "prisma": "*", "typescript": ">=5.1.0" }, "optionalPeers": ["prisma", "typescript"] }, "sha512-jnL2I9gDnPnw4A+4h5SuNn8Gc+1mL1Z79U/3I9eE2gbxJG1oSA+62ByPW4xkeDgwE0fqMzzpAZ7IHxYnLZ4iQA=="],
 
     "@prisma/config": ["@prisma/config@6.18.0", "", { "dependencies": { "c12": "3.1.0", "deepmerge-ts": "7.1.5", "effect": "3.18.4", "empathic": "2.0.0" } }, "sha512-rgFzspCpwsE+q3OF/xkp0fI2SJ3PfNe9LLMmuSVbAZ4nN66WfBiKqJKo/hLz3ysxiPQZf8h1SMf2ilqPMeWATQ=="],
