@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec bun run src/server.ts",
-    "build": "tsc && bunx prisma generate",
+    "build": "tsc",
     "start": "bun run dist/server.js"
   },
   "devDependencies": {
