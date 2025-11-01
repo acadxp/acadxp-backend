@@ -26,12 +26,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
 
-    /* === Paths & Imports === */
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["./*"]
-    },
-
     /* === Output === */
     "outDir": "./dist",
     "sourceMap": true,
@@ -42,5 +36,15 @@
 
     /* === Bun-specific === */
     "types": ["bun-types"]
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "bun.lock",
+    "*.config.js",
+    "*.config.ts",
+    "*.test.ts",
+    "*.spec.ts"
+  ]
 }

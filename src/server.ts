@@ -7,8 +7,12 @@ const app = express();
 const PORT = process.env.PORT || 8001;
 app.use(express.json());
 
-app.use("api/v1/waitlist", WaitListRoutes);
+app.use("/api/v1/waitlist", WaitListRoutes);
 
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK", message: "Server is healthy" });
+});
 app.listen(PORT, () => {
-  console.log(`Server is runnug on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
