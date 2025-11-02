@@ -8,21 +8,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-const allowedOrigins = [process.env.FRONTEND_URL!, "http://localhost:3000"];
+// const allowedOrigins = [process.env.FRONTEND_URL!, "http://localhost:3000"];
 
 const corsOption = {
-  origin: function (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) {
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: process.env.FRONTEND_URL!,
   credentials: true, // If you need to send cookies
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
