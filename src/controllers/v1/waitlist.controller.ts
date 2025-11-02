@@ -23,7 +23,9 @@ export const AddEmailToWaitList = async (req: Request, res: Response) => {
     if (!addEmail) {
       throw new Error("Failed to add email to waitlist");
     }
-    res.status(201).json({ message: "Added to waitlist!", success: true });
+    res
+      .status(201)
+      .json({ message: "Successfully joined the waitlist!", success: true });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       const messages = error.issues.map((e: any) => e.message);
