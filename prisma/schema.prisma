@@ -18,3 +18,157 @@ model WaitlistUser{
   email String 
   createdAt DateTime @default(now())
 }
+
+model User{
+  id String @id @unique @default(cuid())
+  email String @unique
+  username String @unique
+  name String?
+  password String
+  role Role @default(STUDENT)
+  isActive Boolean @default(true)
+  apiKeys ApiKey[]
+  profile Profile?
+  session Session?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email, username])
+  @@index([role])
+  @@index([createdAt])
+  @@index([username])
+}
+
+model Session{
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  refreshToken String
+  expiryDate   Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Profile{
+  id String @id @unique @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio String?
+  gender String?
+  country String?
+  socialLinks Json?
+
+  academicInfo AcademicInfo?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt  
+  
+  @@index([userId])
+}
+
+model AcademicInfo{
+  id String @id @unique @default(cuid())
+  profileId String @unique
+  
+  xp Int @default(0)
+  level Int @default(1)
+  streak Int @default(0)
+
+  institution String?
+  degree DegreeType?
+  fieldOfStudy String?
+
+  courses CourseEnrollment[] 
+  enrollmentStatus EnrollmentStatus @default(FULL_TIME)
+  graduationDate DateTime?
+  enrolledDate DateTime?
+
+  user Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt  
+
+  @@index([profileId])
+}
+
+model CourseEnrollment{
+  id String @id @unique @default(cuid())
+  academicInfoId String
+  courseId String
+
+  academicInfo AcademicInfo @relation(fields: [academicInfoId], references: [id])
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  enrollmentDate DateTime @default(now())
+  completedAt DateTime?
+  completedStatus Boolean @default(false)
+  xpEarned Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt  
+
+  @@unique([academicInfoId, courseId])
+}
+
+model Course{
+  id String @id @unique @default(cuid())
+  courseCode String @unique
+  title String
+  description String?
+  xp Int
+  department Department @default(EDUCATION)
+
+  enrollments CourseEnrollment[]
+  // TODO : Add relation to Teacher model when created 
+  // TODO : Add relation to assignments, exams, materials when created
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseCode])
+  @@index([department])
+}
+
+model ApiKey{
+  id String @id @unique @default(cuid())
+  key String @unique
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+}
+
+enum Role{
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum EnrollmentStatus{
+  FULL_TIME
+  PART_TIME
+ SUSPENDED
+  GRADUATED
+}
+
+enum DegreeType{
+  BACHELORS
+  MASTERS
+  PHD
+  DIPLOMA
+  CERTIFICATE
+}
+
+enum Department{
+  SCIENCE
+  ARTS
+  COMMERCE
+  ENGINEERING
+  MEDICINE
+  LAW
+  EDUCATION
+  TECHNOLOGY
+  OTHER
+}
