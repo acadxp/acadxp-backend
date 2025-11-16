@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 8000;
 // const allowedOrigins = [process.env.FRONTEND_URL!, "http://localhost:3000"];
 
 const corsOption = {
-  origin: "http://localhost:3000",
+  origin: process.env.FRONTEND_URL!,
   credentials: true, // If you need to send cookies
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
