@@ -6,7 +6,7 @@ import { HttpError } from "../../../error/httpError";
 import { generateAccessToken, generateRefreshToken } from "../../../utils/jwt";
 import type { TokenPayload } from "../../../types/auth.types";
 import { generateApiKey } from "../../../utils/apiKey";
-import { generateUUID } from "@neylorxt/generate-unique-key";
+import bcrypt from "bcrypt";
 
 const COOKIE_CONFIG = {
   httpOnly: true,
@@ -94,4 +94,39 @@ export const createUser = async (req: Request, res: Response) => {
     accessToken,
     apiKey,
   });
+};
+
+export const loginUser = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  const loginSchema = z.object({
+    email: z.email("Invalid email address"),
+    password: z.string(),
+  });
+
+  loginSchema.parse({ email, password });
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!user) throw new HttpError(401, "User not found");
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) throw new HttpError(401, "Invalid  password");
+
+  const payload: TokenPayload = {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+    name: user.name as string,
+  };
+
+  const accessToken = generateAccessToken(payload);
+
+  sendSuccessResponse(res, 200, "Login successful", { accessToken });
 };

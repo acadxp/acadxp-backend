@@ -1,5 +1,8 @@
 import express from "express";
-import { createUser } from "../../controllers/v1/auth/auth.controller";
+import {
+  createUser,
+  loginUser,
+} from "../../controllers/v1/auth/auth.controller";
 import {
   checkUsername,
   checkEmail,
@@ -9,6 +12,7 @@ import asyncHandler from "../../utils/asyncHandler";
 const AuthRoutes = express.Router();
 
 AuthRoutes.post("/signup", asyncHandler(createUser));
+AuthRoutes.post("/login", asyncHandler(loginUser));
 AuthRoutes.get("/check-username", asyncHandler(checkUsername));
 AuthRoutes.get("/check-email", asyncHandler(checkEmail));
 
