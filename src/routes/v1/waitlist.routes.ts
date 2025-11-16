@@ -1,5 +1,5 @@
 import express from "express";
-import { AddEmailToWaitList } from "../../controllers/v1/waitlist.controller";
+import { AddEmailToWaitList } from "../../controllers/v1/marketing/waitlist.controller";
 
 const WaitListRoutes = express.Router();
 

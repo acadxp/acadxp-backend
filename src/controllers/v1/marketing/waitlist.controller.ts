@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import * as z from "zod";
-import prisma from "../../utils/db";
+import prisma from "../../../utils/db";
 import { generateUUID } from "@neylorxt/generate-unique-key";
 
 export const AddEmailToWaitList = async (req: Request, res: Response) => {
