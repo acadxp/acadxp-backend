@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DEV_DATABASE_URL")
 }
 
 model WaitlistUser{
@@ -79,12 +79,16 @@ model AcademicInfo{
 
   institution String?
   degree DegreeType?
-  fieldOfStudy String?
+  major String?
+  semester String?
 
-  courses CourseEnrollment[] 
   enrollmentStatus EnrollmentStatus @default(FULL_TIME)
   graduationDate DateTime?
   enrolledDate DateTime?
+
+  courses StudentCourseEnrollment[] 
+  studentSkills StudentSkill[]
+  studentChallenges StudentChallenge[]
 
   user Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -94,7 +98,7 @@ model AcademicInfo{
   @@index([profileId])
 }
 
-model CourseEnrollment{
+model StudentCourseEnrollment{
   id String @id @unique @default(cuid())
   academicInfoId String
   courseId String
@@ -121,7 +125,9 @@ model Course{
   xp Int
   department Department @default(EDUCATION)
 
-  enrollments CourseEnrollment[]
+  studentEnrollments StudentCourseEnrollment[]
+  skills CourseSkill[]  
+  challenges CourseChallenge[]
   // TODO : Add relation to Teacher model when created 
   // TODO : Add relation to assignments, exams, materials when created
   createdAt DateTime @default(now())
@@ -129,6 +135,125 @@ model Course{
 
   @@index([courseCode])
   @@index([department])
+}
+
+model Skill{
+  id String @id @unique @default(cuid())
+  name String @unique
+  description String?
+  icon String?
+  xpValue Int
+
+  courses CourseSkill[]
+  students StudentSkill[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CourseSkill{
+  id String @id @unique @default(cuid())
+  courseId String
+  skillId String
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  proficiencyLevel ProficiencyLevel @default(BEGINNER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt  
+
+  @@unique([courseId, skillId])
+}
+
+model StudentSkill{
+  id String @id @unique @default(cuid())
+  academicInfoId String
+  skillId String
+
+  academicInfo AcademicInfo @relation(fields: [academicInfoId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  proficiencyLevel ProficiencyLevel @default(BEGINNER)
+  xpEarned Int @default(0)
+  
+  acquiredAt DateTime @default(now()) // When student first acquired the skill
+  masteredAt DateTime? // When student reached EXPERT level
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt  
+
+  @@unique([academicInfoId, skillId])
+  @@index([academicInfoId])
+  @@index([skillId])
+  @@index([proficiencyLevel])
+}
+
+model Challenge{
+  id String @id @unique @default(cuid())
+  title String
+  description String
+  type ChallengeType
+  difficulty ChallengeDifficulty @default(EASY)
+  xpReward Int
+  criteria Json // Storing challenge criteria/requirements as JSON
+
+  courses CourseChallenge[]
+  students StudentChallenge[]
+
+  isActive Boolean @default(true)
+  startsAt DateTime?
+  endsAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([difficulty])
+  @@index([type])
+  @@index([isActive])
+}
+
+model CourseChallenge{
+  id String @id @unique @default(cuid())
+  courseId String
+  challengeId String
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  isRequired Boolean @default(false) // Is this challenge mandatory for course completion?
+  order Int @default(0) // Order in which challenges should be completed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt  
+
+  @@unique([courseId, challengeId])
+  @@index([courseId])
+  @@index([challengeId])
+}
+
+model StudentChallenge{
+  id String @id @unique @default(cuid())
+  academicInfoId String
+  challengeId String
+
+  academicInfo AcademicInfo @relation(fields: [academicInfoId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  attempts Int @default(0)
+  status ChallengeStatus @default(NOT_STARTED) 
+  progress Int @default(0) // Progress percentage (0-100)
+  result Json? // Store challenge results/score as JSON
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt  
+
+  @@unique([academicInfoId, challengeId])
+  @@index([academicInfoId])
+  @@index([challengeId])
+  @@index([status])
 }
 
 model ApiKey{
@@ -149,7 +274,7 @@ enum Role{
 enum EnrollmentStatus{
   FULL_TIME
   PART_TIME
- SUSPENDED
+  SUSPENDED
   GRADUATED
 }
 
@@ -171,4 +296,36 @@ enum Department{
   EDUCATION
   TECHNOLOGY
   OTHER
+}
+
+enum ProficiencyLevel{
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum ChallengeDifficulty{
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+enum ChallengeType{
+  DAILY
+  WEEKLY
+  MONTHLY
+  ASSIGNMENT
+  QUIZ
+  PROJECT
+  ACHIEVEMENT
+}
+
+enum ChallengeStatus{
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ABANDONED
 }
