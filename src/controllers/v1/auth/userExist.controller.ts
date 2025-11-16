@@ -19,7 +19,8 @@ export const checkUsername = async (req: Request, res: Response) => {
   });
 
   if (usernameExists) {
-    throw new HttpError(409, "Username already exists");
+    // throw new HttpError(409, "Username already exists");
+    sendSuccessResponse(res, 200, "Username already exists");
   }
 
   sendSuccessResponse(res, 200, "Username is available");
@@ -35,12 +36,13 @@ export const checkEmail = async (req: Request, res: Response) => {
 
   emailSchema.parse({ email });
 
-  const usenameExists = await prisma.user.findUnique({
+  const emailExists = await prisma.user.findUnique({
     where: { email },
   });
 
-  if (usenameExists) {
-    throw new HttpError(409, "Email already exists");
+  if (emailExists) {
+    // throw new HttpError(409, "Email already exists");
+    sendSuccessResponse(res, 200, "Email already exists");
   }
 
   sendSuccessResponse(res, 200, "Email is available");
