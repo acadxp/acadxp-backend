@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@neylorxt/generate-unique-key": "^1.0.0",
+    "@prisma/adapter-pg": "^7.0.1",
     "@prisma/client": "7",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
