@@ -259,6 +259,8 @@ model ApiKey{
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   expiresAt DateTime?
+
+  @@unique([key, userId])
 }
 
 enum Role{

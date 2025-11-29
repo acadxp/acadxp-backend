@@ -8,6 +8,7 @@ import {
   checkEmail,
 } from "../../controllers/v1/auth/userExist.controller";
 import asyncHandler from "../../utils/asyncHandler";
+import apiKeyHandler from "../../middlewares/apiKeyMiddleware";
 
 const AuthRoutes = express.Router();
 
