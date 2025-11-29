@@ -5,12 +5,12 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DEV_DATABASE_URL")
 }
 
 model WaitlistUser{
@@ -36,7 +36,6 @@ model User{
   @@index([email, username])
   @@index([role])
   @@index([createdAt])
-  @@index([username])
 }
 
 model Session{
@@ -65,12 +64,10 @@ model Profile{
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt  
-  
-  @@index([userId])
-}
+  }
 
 model AcademicInfo{
-  id String @id @unique @default(cuid())
+  id String @id @default(cuid())
   profileId String @unique
   
   xp Int @default(0)
@@ -94,9 +91,8 @@ model AcademicInfo{
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt  
-
   @@index([profileId])
-}
+  }
 
 model StudentCourseEnrollment{
   id String @id @unique @default(cuid())
