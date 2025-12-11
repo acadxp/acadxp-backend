@@ -93,6 +93,7 @@ export const createUser = async (req: Request, res: Response) => {
   sendSuccessResponse(res, 201, "User created successfully", {
     accessToken,
     apiKey,
+    user: payload,
   });
 };
 
@@ -128,5 +129,8 @@ export const loginUser = async (req: Request, res: Response) => {
 
   const accessToken = generateAccessToken(payload);
 
-  sendSuccessResponse(res, 200, "Login successful", { accessToken });
+  sendSuccessResponse(res, 200, "Login successful", {
+    accessToken,
+    user: payload,
+  });
 };
