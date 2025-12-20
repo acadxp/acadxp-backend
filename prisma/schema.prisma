@@ -85,6 +85,7 @@ model Verification {
 model Profile{
   id        String   @id @unique @default(cuid())
   userId    String   @unique
+  username  String   @unique
   bio       String?
   location  String?
   socials   Json?

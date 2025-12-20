@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import * as z from "zod";
-import prisma from "../../../utils/db";
+import { prisma } from "../../../utils/db";
 import { HttpError } from "../../../error/httpError";
 import { sendSuccessResponse } from "../../../utils/utils";
 
@@ -14,7 +14,7 @@ export const checkUsername = async (req: Request, res: Response) => {
 
   usernameSchema.parse({ username });
 
-  const usernameExists = await prisma.user.findUnique({
+  const usernameExists = await prisma.profile.findUnique({
     where: { username },
   });
 

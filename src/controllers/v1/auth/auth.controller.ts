@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import * as z from "zod";
-import prisma from "../../../utils/db";
+import auth, { prisma } from "../../../utils/db";
 import { hashPassword, sendSuccessResponse } from "../../../utils/utils";
 import { HttpError } from "../../../error/httpError";
 import { generateAccessToken, generateRefreshToken } from "../../../utils/jwt";
@@ -29,7 +29,7 @@ export const createUser = async (req: Request, res: Response) => {
 
   createUserSchema.parse({ name, email, password, username });
 
-  const usernameExists = await prisma.user.findUnique({
+  const usernameExists = await prisma.profile.findUnique({
     where: { username },
   });
 
@@ -49,7 +49,6 @@ export const createUser = async (req: Request, res: Response) => {
 
   const newUser = await prisma.user.create({
     data: {
-      username,
       name,
       email,
       password: hashedPassword,
