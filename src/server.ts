@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import WaitListRoutes from "./routes/v1/waitlist.routes";
-import AuthRoutes from "./routes/v1/auth.routes";
+import BetterAuthRoutes from "./routes/v1/better-auth.routes";
 import { errorHandler } from "./middlewares/errorMiddleware";
 
 dotenv.config();
@@ -10,21 +10,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// const allowedOrigins = [process.env.FRONTEND_URL!, "http://localhost:3000"];
-
 const corsOption = {
-  origin: process.env.FRONTEND_URL!,
-  // origin: "http://localhost:3000",
-  credentials: true, // If you need to send cookies
+  // origin: process.env.FRONTEND_URL!,
+  origin: "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
+  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
-app.use(express.json());
 app.use(cors(corsOption));
 
-app.use("/api/v1/waitlist", WaitListRoutes);
-app.use("/api/v1/auth", AuthRoutes);
+app.use(express.json());
 
-// Health check endpoint
+// Better-Auth routes (handles all auth endpoints)
+app.use("/api/v1/auth", BetterAuthRoutes);
+
+app.use("/api/v1/waitlist", WaitListRoutes);
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "OK", message: "Server is healthy" });
 });
