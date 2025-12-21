@@ -25,3 +25,25 @@ export const checkUsername = async (req: Request, res: Response) => {
 
   sendSuccessResponse(res, 200, "Username is available");
 };
+
+export const checkEmail = async (req: Request, res: Response) => {
+  const email = req.query.email as string;
+
+  // Validate request body
+  const emailSchema = z.object({
+    email: z.email("Invalid email address"),
+  });
+
+  emailSchema.parse({ email });
+
+  const emailExists = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (emailExists) {
+    // throw new HttpError(409, "Email already exists");
+    sendSuccessResponse(res, 200, "Email already exists");
+  }
+
+  sendSuccessResponse(res, 200, "Email is available");
+};

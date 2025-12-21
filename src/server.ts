@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import WaitListRoutes from "./routes/v1/waitlist.routes";
 import BetterAuthRoutes from "./routes/v1/better-auth.routes";
+import ProfileRoutes from "./routes/v1/profile.routes";
 import { errorHandler } from "./middlewares/errorMiddleware";
 
 dotenv.config();
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use("/api/v1/auth", BetterAuthRoutes);
 
 app.use("/api/v1/waitlist", WaitListRoutes);
+app.use("/api/v1/profile", ProfileRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "OK", message: "Server is healthy" });
