@@ -48,6 +48,7 @@ export const auth = betterAuth({
 
   // Trust host in development
   trustHost: true,
+  trustedOrigins: ["http://localhost:3000"],
 });
 
 export default auth;
