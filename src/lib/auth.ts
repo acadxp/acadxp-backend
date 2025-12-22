@@ -4,14 +4,14 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "../generated/prisma/client";
 import { betterAuth } from "better-auth";
 
-const connectionString = `${process.env.DEV_DATABASE_URL}`;
+const connectionString = `${process.env.DATABASE_URL!}`;
 const adapter = new PrismaPg({ connectionString });
 
 const prisma = new PrismaClient({ adapter });
 
 export const auth = betterAuth({
-  // baseURL: process.env.PROD_BETTER_AUTH_URL!,
-  baseURL: process.env.DEV_BETTER_AUTH_URL!,
+  baseURL: process.env.PROD_BETTER_AUTH_URL!,
+  // baseURL: process.env.DEV_BETTER_AUTH_URL!,
   basePath: "/api/v1/auth",
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -48,7 +48,8 @@ export const auth = betterAuth({
 
   // Trust host in development
   trustHost: true,
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: [process.env.FRONTEND_URL!],
+  // trustedOrigins: ["http://localhost:3000"],
 });
 
 export default auth;
