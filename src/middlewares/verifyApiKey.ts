@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { HttpError } from "../error/httpError";
-import { hashApiKey } from "../utils/apiKey";
-import prisma from "../utils/db";
+import { hashApiKey } from "../lib/apiKey";
+import prisma from "../lib/db";
 
 const apiKeyHandler = async (
   req: Request,

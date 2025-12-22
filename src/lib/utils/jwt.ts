@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import type { TokenPayload } from "../types/auth.types";
+import type { TokenPayload } from "../../types/auth.types";
 
 /**
  * Generates a short-lived access token (valid for 7 days) used to authenticate user requests.

@@ -37,7 +37,7 @@
     /* === Bun-specific === */
     "types": ["bun-types"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/lib/db.ts"],
   "exclude": [
     "node_modules",
     "dist",
