@@ -19,7 +19,7 @@ const corsOption = {
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 app.use(cors(corsOption));
-app.options("*", cors(corsOption)); // Handle preflight for all routes
+// app.options("*", cors(corsOption)); // Handle preflight for all routes
 
 app.use(express.json());
 
