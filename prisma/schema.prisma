@@ -118,6 +118,10 @@ model AcademicInfo{
   courses StudentCourseEnrollment[] 
   studentSkills StudentSkill[]
   studentChallenges StudentChallenge[]
+  xpEvents XPEvent[]
+  badges StudentBadge[]
+  notifications Notification[]
+  goals Goal[]
 
   user Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -125,6 +129,25 @@ model AcademicInfo{
   updatedAt DateTime @updatedAt  
   @@index([profileId])
   }
+
+  model XPEvent {
+  id String @id @default(cuid())
+
+  academicInfoId String
+  sourceType XPSourceType
+  sourceId String?
+
+  xp Int
+  description String?
+
+  academicInfo AcademicInfo @relation(fields: [academicInfoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([academicInfoId])
+  @@index([sourceType])
+}
+
 
   model StudentCourseEnrollment{
   id String @id @unique @default(cuid())
@@ -156,6 +179,7 @@ model Course{
   studentEnrollments StudentCourseEnrollment[]
   skills CourseSkill[]  
   challenges CourseChallenge[]
+  aiCourseBluePrint AICourseBluePrint[]
   // TODO : Add relation to Teacher model when created 
   // TODO : Add relation to assignments, exams, materials when created
   createdAt DateTime @default(now())
@@ -163,6 +187,30 @@ model Course{
 
   @@index([courseCode])
   @@index([department])
+}
+
+model AICourseBluePrint{
+  id String @id @unique @default(cuid())
+
+  courseId String @unique
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  status AIBlueprintStatus @default(PENDING)
+
+  generatedChallenges Json
+  generatedSkills Json
+  generatedBadges Json?
+
+  aiModel String
+  aiVersion String?
+  proimptVersion String?
+
+  generatedAt DateTime @default(now())
+  acceptedAt DateTime?
+  rejectedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Skill{
@@ -284,6 +332,68 @@ model StudentChallenge{
   @@index([status])
 }
 
+model Badge {
+  id String @id @default(cuid())
+  title String
+  description String
+  icon String?
+  xpReward Int @default(0)
+
+  criteria Json
+  isActive Boolean @default(true)
+
+  students StudentBadge[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudentBadge {
+  id String @id @default(cuid())
+
+  academicInfoId String
+  badgeId String
+
+  academicInfo AcademicInfo @relation(fields: [academicInfoId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  unlockedAt DateTime @default(now())
+
+  @@unique([academicInfoId, badgeId])
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  academicInfoId String
+  type NotificationType
+  title String
+  message String
+
+  isRead Boolean @default(false)
+  sentAt DateTime @default(now())
+
+  academicInfo AcademicInfo @relation(fields: [academicInfoId], references: [id], onDelete: Cascade)
+
+  @@index([academicInfoId, isRead])
+}
+
+model Goal {
+  id String @id @default(cuid())
+
+  academicInfoId String
+  type GoalType
+  target Json
+
+  progress Int @default(0)
+  isCompleted Boolean @default(false)
+  completedAt DateTime?
+
+  academicInfo AcademicInfo @relation(fields: [academicInfoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
 model ApiKey{
   id String @id @unique @default(cuid())
   key String @unique
@@ -295,20 +405,20 @@ model ApiKey{
   @@unique([key, userId])
 }
 
-enum Role{
+enum Role {
   STUDENT
   TEACHER
   ADMIN
 }
 
-enum EnrollmentStatus{
+enum EnrollmentStatus {
   FULL_TIME
   PART_TIME
   SUSPENDED
   GRADUATED
 }
 
-enum DegreeType{
+enum DegreeType {
   BACHELORS
   MASTERS
   PHD
@@ -316,7 +426,7 @@ enum DegreeType{
   CERTIFICATE
 }
 
-enum Department{
+enum Department {
   SCIENCE
   ARTS
   COMMERCE
@@ -328,21 +438,21 @@ enum Department{
   OTHER
 }
 
-enum ProficiencyLevel{
+enum ProficiencyLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
   EXPERT
 }
 
-enum ChallengeDifficulty{
+enum ChallengeDifficulty {
   EASY
   MEDIUM
   HARD
   EXPERT
 }
 
-enum ChallengeType{
+enum ChallengeType {
   DAILY
   WEEKLY
   MONTHLY
@@ -352,10 +462,41 @@ enum ChallengeType{
   ACHIEVEMENT
 }
 
-enum ChallengeStatus{
+enum ChallengeStatus {
   NOT_STARTED
   IN_PROGRESS
   COMPLETED
   FAILED
   ABANDONED
+}
+
+enum AIBlueprintStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  PARTIALLY_ACCEPTED
+}
+
+enum XPSourceType {
+  COURSE
+  CHALLENGE
+  SKILL
+  BADGE
+  MANUAL
+}
+
+enum NotificationType {
+  STREAK
+  DEADLINE
+  GOAL
+  LEVEL_UP
+  BADGE
+}
+
+enum GoalType {
+  XP
+  SKILL
+  CHALLENGE
+  COURSE
+  STREAK
 }
