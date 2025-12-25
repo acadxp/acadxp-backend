@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import express from "express";
 import auth from "../../lib/auth";
 import prisma from "../../lib/db";
-import asyncHandler from "../../lib/utils/asyncHandler";
+import asyncHandler from "../../utils/asyncHandler";
 
 const BetterAuthRoutes = express.Router();
 
