@@ -17,6 +17,12 @@ const createUser = async (data: ICreateUser) => {
   });
 };
 
+const getUserByEmail = async (email: string) => {
+  return await prisma.user.findUnique({
+    where: { email },
+  });
+};
+
 const storeRefreshToken = async (data: IStoreRefreshToken) => {
   return await prisma.account.create({
     data: {
@@ -28,4 +34,15 @@ const storeRefreshToken = async (data: IStoreRefreshToken) => {
   });
 };
 
-export const userRepos = { createUser, storeRefreshToken };
+const getUserById = async (userId: string) => {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+  });
+};
+
+export const userRepos = {
+  createUser,
+  storeRefreshToken,
+  getUserById,
+  getUserByEmail,
+};

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { HttpError } from "../error/httpError";
-import prisma from "../lib/db";
-import auth from "../lib/auth";
+import { userRepos } from "../infra/repos/user.repo";
+import { verifyToken } from "../lib/jwt";
 
 // Extend Express Request to include user
 declare global {
@@ -10,15 +10,9 @@ declare global {
       user?: {
         id: string;
         email: string;
-        name?: string;
+        name: string;
         emailVerified: boolean;
-        role?: string;
-      };
-      session?: {
-        id: string;
-        token: string;
-        userId: string;
-        expiresAt: Date;
+        role: string;
       };
     }
   }
@@ -29,43 +23,34 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    // Get session and user from BetterAuth
-    const session = await auth.api.getSession({ headers: req.headers });
-
-    if (!session || !session.user) {
-      console.error(req.headers);
-      throw new HttpError(401, "Unauthorized - No valid session");
-    }
-
-    // Fetch user with role from database
-    const userWithRole = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        emailVerified: true,
-        role: true,
-      },
-    });
-
-    if (!userWithRole) {
-      throw new HttpError(401, "Unauthorized - User not found");
-    }
-
-    // Attach user and session to request
-    req.user = {
-      ...session.user,
-      role: userWithRole.role,
-    };
-    req.session = session.session;
-
-    next();
-  } catch (error) {
-    console.error("Auth Middleware Error:", error);
-    throw new HttpError(401, "Unauthorized - Invalid session");
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new HttpError(401, "Unauthorized - No token provided");
   }
+
+  const token = authHeader.split(" ")[1];
+
+  const secret = process.env.JWT_SECRET!;
+  let decodedToken = verifyToken(token!, secret);
+
+  if (!decodedToken || !decodedToken.userId) {
+    throw new HttpError(401, "Unauthorized - Invalid token");
+  }
+
+  const user = await userRepos.getUserById(decodedToken.userId);
+
+  if (!user) {
+    throw new HttpError(401, "Unauthorized - User not found");
+  }
+  req.user = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    emailVerified: user.emailVerified,
+    role: user.role,
+  };
+
+  next();
 };
 
 // Role-based access control middleware

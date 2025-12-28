@@ -38,4 +38,25 @@ export const createUser = async (req: Request, res: Response) => {
   );
 };
 
-export const getUser = async (req: Request, res: Response) => {};
+export const loginUser = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  const { userWithoutPwd, accessToken } = await AuthService.loginUser(
+    email,
+    password
+  );
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 60 * 60 * 1000, // 1 hour
+  });
+
+  return sendSuccessResponse(
+    res,
+    200,
+    "User logged in successfully",
+    userWithoutPwd
+  );
+};
