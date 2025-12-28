@@ -13,9 +13,13 @@ ProfileRoutes.get("/profile/check-username", asyncHandler(checkUsername));
 resolveSync;
 ProfileRoutes.get(
   "/profile",
-  // asyncHandler(authMiddleware),
+  asyncHandler(authMiddleware),
   asyncHandler(getUserProfile)
 );
-ProfileRoutes.post("/profile/create", asyncHandler(createUserProfile));
+ProfileRoutes.post(
+  "/profile/create",
+  asyncHandler(authMiddleware),
+  asyncHandler(createUserProfile)
+);
 
 export default ProfileRoutes;

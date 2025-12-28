@@ -10,9 +10,9 @@ import {
 } from "../../utils/http-response";
 
 export const getUserProfile = async (req: Request, res: Response) => {
-  const userId = req.query.userId;
+  const user = req.user;
 
-  const userProfile = await profileService.getUserProfile(userId as string);
+  const userProfile = await profileService.getUserProfile(user?.id as string);
 
   if (!userProfile) {
     return sendErrorResponse(res, 404, "User profile not found");
@@ -25,10 +25,10 @@ export const getUserProfile = async (req: Request, res: Response) => {
 
 export const createUserProfile = async (req: Request, res: Response) => {
   const { username, bio, location, socials } = req.body;
-  const userId = req.query.userId;
+  const user = req.user;
 
   const data = createProfileSchema.parse({
-    userId,
+    userId: user!.id,
     username,
     ...(bio && { bio }),
     ...(location && { location }),
