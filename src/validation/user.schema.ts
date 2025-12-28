@@ -6,3 +6,7 @@ export const createUserSchema = z.object({
 });
 
 export type ICreateUser = z.infer<typeof createUserSchema>;
+
+export const createEmailSchema = z.object({
+  email: z.email("Invalid email address"),
+});

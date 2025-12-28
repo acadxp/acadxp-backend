@@ -56,4 +56,10 @@ const loginUser = async (email: string, password: string): Promise<User> => {
   return { userWithoutPwd, accessToken };
 };
 
-export const AuthService = { registerUser, loginUser };
+// check if email is already used
+const isEmailAlreadyUsed = async (email: string): Promise<boolean> => {
+  const emailExists = await userRepos.getUserByEmail(email);
+  return !!emailExists;
+};
+
+export const AuthService = { registerUser, loginUser, isEmailAlreadyUsed };

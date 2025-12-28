@@ -3,7 +3,6 @@ import { profileService } from "../../services/profile.services";
 import {
   createProfileSchema,
   createUsernameSchema,
-  createEmailSchema,
 } from "../../validation/profile.schema";
 import {
   sendSuccessResponse,
@@ -67,18 +66,4 @@ export const checkUsername = async (req: Request, res: Response) => {
   }
 
   sendSuccessResponse(res, 200, "Username is available");
-};
-
-export const checkEmail = async (req: Request, res: Response) => {
-  const email = req.query.email as string;
-
-  const data = createEmailSchema.parse({ email });
-
-  const emailExists = profileService.isEmailAlreadyUsed(data.email);
-
-  if (!emailExists) {
-    sendErrorResponse(res, 409, "Email already exists");
-  }
-
-  sendSuccessResponse(res, 200, "Email is available");
 };

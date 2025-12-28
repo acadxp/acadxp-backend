@@ -1,8 +1,12 @@
-import { sendSuccessResponse } from "../../utils/http-response";
+import {
+  sendSuccessResponse,
+  sendErrorResponse,
+} from "../../utils/http-response";
 import type { Request, Response } from "express";
 import { AuthService } from "../../services/auth.services";
 import { createUserSchema } from "../../validation/user.schema";
 import type { ICreateUser } from "../../validation/user.schema";
+import { createEmailSchema } from "../../validation/user.schema";
 
 export const createUser = async (req: Request, res: Response) => {
   const { email, password, name } = req.body;
@@ -59,4 +63,17 @@ export const loginUser = async (req: Request, res: Response) => {
     "User logged in successfully",
     userWithoutPwd
   );
+};
+
+export const checkEmail = async (req: Request, res: Response) => {
+  const email = req.query.email as string;
+
+  const data = createEmailSchema.parse({ email });
+
+  const emailExists = await AuthService.isEmailAlreadyUsed(data.email);
+
+  if (emailExists) {
+    return sendErrorResponse(res, 409, "Email is already in use");
+  }
+  sendSuccessResponse(res, 200, "Email is available");
 };
