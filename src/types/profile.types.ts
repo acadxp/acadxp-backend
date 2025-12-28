@@ -7,3 +7,8 @@ export type IProfile = {
 };
 
 export type ISocials = Record<string, string>;
+
+export type IStoreRefreshToken = {
+  userId: string;
+  refreshToken: string;
+};

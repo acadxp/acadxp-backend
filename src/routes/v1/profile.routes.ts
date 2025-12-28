@@ -12,8 +12,8 @@ const ProfileRoutes = express.Router();
 ProfileRoutes.get("/profile/check-username", asyncHandler(checkUsername));
 ProfileRoutes.get("/check-email", asyncHandler(checkEmail));
 ProfileRoutes.get(
-  "/profile/me",
-  asyncHandler(authMiddleware),
+  "/profile",
+  // asyncHandler(authMiddleware),
   asyncHandler(getUserProfile)
 );
 ProfileRoutes.post("/profile/create", asyncHandler(createUserProfile));

@@ -34,6 +34,7 @@ export const authMiddleware = async (
     const session = await auth.api.getSession({ headers: req.headers });
 
     if (!session || !session.user) {
+      console.error(req.headers);
       throw new HttpError(401, "Unauthorized - No valid session");
     }
 
@@ -62,6 +63,7 @@ export const authMiddleware = async (
 
     next();
   } catch (error) {
+    console.error("Auth Middleware Error:", error);
     throw new HttpError(401, "Unauthorized - Invalid session");
   }
 };

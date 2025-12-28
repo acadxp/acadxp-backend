@@ -5,15 +5,18 @@ import {
   createUsernameSchema,
   createEmailSchema,
 } from "../../validation/profile.schema";
-import { sendSuccessResponse } from "../../utils/http-response";
+import {
+  sendSuccessResponse,
+  sendErrorResponse,
+} from "../../utils/http-response";
 
 export const getUserProfile = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
+  const userId = req.query.userId;
 
-  const userProfile = await profileService.getUserProfile(userId!);
+  const userProfile = await profileService.getUserProfile(userId as string);
 
   if (!userProfile) {
-    return sendSuccessResponse(res, 404, "User profile not found");
+    return sendErrorResponse(res, 404, "User profile not found");
   }
 
   return sendSuccessResponse(res, 200, "User profile fetched successfully", {
@@ -22,7 +25,8 @@ export const getUserProfile = async (req: Request, res: Response) => {
 };
 
 export const createUserProfile = async (req: Request, res: Response) => {
-  const { userId, username, bio, location, socials } = req.body;
+  const { username, bio, location, socials } = req.body;
+  const userId = req.query.userId;
 
   const data = createProfileSchema.parse({
     userId,
@@ -37,13 +41,13 @@ export const createUserProfile = async (req: Request, res: Response) => {
   );
 
   if (usernameExists) {
-    return sendSuccessResponse(res, 200, "Username already exists");
+    return sendErrorResponse(res, 409, "Username already exists");
   }
 
   const createdProfile = await profileService.createUserProfile(data);
 
   if (!createdProfile) {
-    return sendSuccessResponse(res, 500, "Failed to create user profile");
+    return sendErrorResponse(res, 500, "Failed to create user profile");
   }
 
   return sendSuccessResponse(res, 201, "User profile created successfully", {
@@ -59,7 +63,7 @@ export const checkUsername = async (req: Request, res: Response) => {
   const usernameExists = profileService.isUsernameAlreadyUsed(data.username);
 
   if (!usernameExists) {
-    sendSuccessResponse(res, 200, "Username already exists");
+    sendErrorResponse(res, 409, "Username already exists");
   }
 
   sendSuccessResponse(res, 200, "Username is available");
@@ -73,7 +77,7 @@ export const checkEmail = async (req: Request, res: Response) => {
   const emailExists = profileService.isEmailAlreadyUsed(data.email);
 
   if (!emailExists) {
-    sendSuccessResponse(res, 200, "Email already exists");
+    sendErrorResponse(res, 409, "Email already exists");
   }
 
   sendSuccessResponse(res, 200, "Email is available");

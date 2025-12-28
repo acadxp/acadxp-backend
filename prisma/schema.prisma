@@ -17,15 +17,14 @@ model WaitlistUser {
 model User {
   id            String    @id
   name          String
+  password      String
   email         String
   emailVerified Boolean   @default(false)
-  image         String?
   role Role @default(STUDENT)
   isActive Boolean @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions      Session[]
   accounts      Account[]
   profile       Profile?
   apiKeys       ApiKey[]
@@ -34,35 +33,13 @@ model User {
   @@map("user")
 }
 
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@index([userId])
-  @@map("session")
-}
 
 model Account {
   id                    String    @id
-  accountId             String
-  providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
   refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
+  expiresAt DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
