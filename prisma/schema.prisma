@@ -39,7 +39,8 @@ model Account {
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   refreshToken          String?
-  expiresAt DateTime?
+  expiresAt             DateTime?
+  isRevoked             Boolean   @default(false)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 

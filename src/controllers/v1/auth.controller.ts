@@ -31,7 +31,7 @@ export const createUser = async (req: Request, res: Response) => {
     httpOnly: true,
     secure: true,
     sameSite: "strict",
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   return sendSuccessResponse(
@@ -57,6 +57,13 @@ export const loginUser = async (req: Request, res: Response) => {
     maxAge: 60 * 60 * 1000, // 1 hour
   });
 
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
   return sendSuccessResponse(
     res,
     200,
@@ -76,4 +83,46 @@ export const checkEmail = async (req: Request, res: Response) => {
     return sendErrorResponse(res, 409, "Email is already in use");
   }
   sendSuccessResponse(res, 200, "Email is available");
+};
+
+// Get current user (session)
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+
+  const { userWithoutPwd, accessToken } = await AuthService.getCurrentUser(
+    userId!
+  );
+
+  return sendSuccessResponse(res, 200, "Current user fetched", {
+    userWithoutPwd,
+    accessToken,
+  });
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+  const refreshTokenFromCookie = req.cookies.refreshToken;
+  if (!refreshTokenFromCookie) {
+    return sendErrorResponse(res, 401, "No refresh token provided");
+  }
+
+  const { userWithoutPwd, accessToken, refreshToken } =
+    await AuthService.refreshAccessToken(refreshTokenFromCookie);
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 60 * 60 * 1000, // 1 hour
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  return sendSuccessResponse(res, 200, "Access token refreshed", {
+    userWithoutPwd,
+  });
 };

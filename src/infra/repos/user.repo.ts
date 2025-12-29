@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { hashPassword } from "../../lib/managePassword";
 import type { ICreateUser } from "../../validation/user.schema";
 import type { IStoreRefreshToken } from "../../types/profile.types";
+import { verifyToken } from "../../lib/jwt";
 
 const createUser = async (data: ICreateUser) => {
   const hashedPwd = await hashPassword(data.password);
@@ -29,7 +30,7 @@ const storeRefreshToken = async (data: IStoreRefreshToken) => {
       id: uuidv4(),
       userId: data.userId,
       refreshToken: data.refreshToken,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     },
   });
 };
@@ -40,9 +41,33 @@ const getUserById = async (userId: string) => {
   });
 };
 
+const validateRefreshToken = async (refreshToken: string) => {
+  const secret = process.env.JWT_REFRESH_SECRET!;
+  const decoded = verifyToken(refreshToken, secret);
+
+  // check if token exists in DB
+  const account = await prisma.account.findFirst({
+    where: { refreshToken, isRevoked: false },
+  });
+
+  if (!account) {
+    throw new Error("Refresh token not found or revoked");
+  }
+  return decoded;
+};
+
+const revokeRefreshToken = async (userId: string) => {
+  return await prisma.account.updateMany({
+    where: { userId },
+    data: { isRevoked: true },
+  });
+};
+
 export const userRepos = {
   createUser,
   storeRefreshToken,
   getUserById,
   getUserByEmail,
+  validateRefreshToken,
+  revokeRefreshToken,
 };

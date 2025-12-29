@@ -51,9 +51,24 @@ const loginUser = async (email: string, password: string): Promise<User> => {
     role: user.role,
   });
 
+  const refreshToken = generateRefreshToken({
+    email: user.email,
+    userId: user.id,
+    role: user.role,
+  });
+
+  // revoke existing refresh tokens
+  await userRepos.revokeRefreshToken(user.id);
+
+  // store new refresh token in DB
+  await userRepos.storeRefreshToken({
+    userId: user.id,
+    refreshToken,
+  });
+
   const userWithoutPwd = sanitizeUser(user);
 
-  return { userWithoutPwd, accessToken };
+  return { userWithoutPwd, accessToken, refreshToken };
 };
 
 // check if email is already used
@@ -62,4 +77,74 @@ const isEmailAlreadyUsed = async (email: string): Promise<boolean> => {
   return !!emailExists;
 };
 
-export const AuthService = { registerUser, loginUser, isEmailAlreadyUsed };
+// Refresh access token using refresh token
+const refreshAccessToken = async (refreshToken: string) => {
+  const secret = process.env.JWT_REFRESH_SECRET as string;
+
+  // verify refresh token
+  const decoded = await userRepos.validateRefreshToken(refreshToken);
+
+  if (!decoded) {
+    throw new Error("Invalid or expired refresh token");
+  }
+
+  const user = await userRepos.getUserById(decoded.userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const newAccessToken = generateAccessToken({
+    email: user.email,
+    userId: user.id,
+    role: user.role,
+  });
+
+  const newRefreshToken = generateRefreshToken({
+    email: user.email,
+    userId: user.id,
+    role: user.role,
+  });
+
+  // revoke existing refresh tokens
+  await userRepos.revokeRefreshToken(user.id);
+
+  // store new refresh token in DB
+  await userRepos.storeRefreshToken({
+    userId: user.id,
+    refreshToken: newRefreshToken,
+  });
+
+  const userWithoutPwd = sanitizeUser(user);
+
+  return {
+    userWithoutPwd,
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+  };
+};
+
+// Get current user (session check)
+const getCurrentUser = async (userId: string) => {
+  const user = await userRepos.getUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const userWithoutPwd = sanitizeUser(user);
+  const newAccessToken = generateAccessToken({
+    email: user.email,
+    userId: user.id,
+    role: user.role,
+  });
+
+  return { userWithoutPwd, accessToken: newAccessToken };
+};
+
+export const AuthService = {
+  registerUser,
+  loginUser,
+  isEmailAlreadyUsed,
+  refreshAccessToken,
+  getCurrentUser,
+};
