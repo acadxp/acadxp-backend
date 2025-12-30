@@ -11,4 +11,7 @@ export const hashApiKey = (apiKey: string): string => {
   return crypto.createHash("sha256").update(apiKey).digest("hex");
 };
 
-// export const verifyApiKey
+export const verifyApiKey = (apiKey: string, hashedKey: string): boolean => {
+  const hash = hashApiKey(apiKey);
+  return hash === hashedKey;
+};

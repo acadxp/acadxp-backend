@@ -17,13 +17,6 @@ const findByUsername = async (username: string): Promise<Profile | null> => {
   });
 };
 
-// find email
-const findByEmail = async (email: string): Promise<Profile | null> => {
-  return await prisma.user.findFirst({
-    where: { email },
-  });
-};
-
 // create new profile
 const createProfile = async (
   profileData: Partial<Profile>
@@ -36,6 +29,5 @@ const createProfile = async (
 export const profileRepo = {
   findProfileByUserId,
   findByUsername,
-  findByEmail,
   createProfile,
 };

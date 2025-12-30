@@ -14,12 +14,6 @@ const isUsernameAlreadyUsed = async (username: string): Promise<boolean> => {
   return !!usernameExists;
 };
 
-// check if email is already used
-const isEmailAlreadyUsed = async (email: string): Promise<boolean> => {
-  const emailExists = await profileRepo.findByEmail(email);
-  return !!emailExists;
-};
-
 // Create profile
 const createUserProfile = async (profileData: IProfile) => {
   return await profileRepo.createProfile(profileData);
@@ -28,6 +22,5 @@ const createUserProfile = async (profileData: IProfile) => {
 export const profileService = {
   getUserProfile,
   isUsernameAlreadyUsed,
-  isEmailAlreadyUsed,
   createUserProfile,
 };

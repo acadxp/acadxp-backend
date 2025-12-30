@@ -3,19 +3,23 @@ import {
   getUserProfile,
   createUserProfile,
   checkUsername,
-  checkEmail,
 } from "../../controllers/v1/profile.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 import asyncHandler from "../../utils/asyncHandler";
+import { resolveSync } from "bun";
 const ProfileRoutes = express.Router();
 
 ProfileRoutes.get("/profile/check-username", asyncHandler(checkUsername));
-ProfileRoutes.get("/check-email", asyncHandler(checkEmail));
+resolveSync;
 ProfileRoutes.get(
-  "/profile/me",
+  "/profile",
   asyncHandler(authMiddleware),
   asyncHandler(getUserProfile)
 );
-ProfileRoutes.post("/profile/create", asyncHandler(createUserProfile));
+ProfileRoutes.post(
+  "/profile/create",
+  asyncHandler(authMiddleware),
+  asyncHandler(createUserProfile)
+);
 
 export default ProfileRoutes;
