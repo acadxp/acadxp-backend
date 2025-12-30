@@ -139,10 +139,16 @@ const getCurrentUser = async (userId: string) => {
   return { userWithoutPwd, accessToken: newAccessToken };
 };
 
+// Delete refresh token (logout)
+const deleteRefreshToken = async (refreshToken: string) => {
+  await userRepos.deleteRefreshToken(refreshToken);
+};
+
 export const AuthService = {
   registerUser,
   loginUser,
   isEmailAlreadyUsed,
   refreshAccessToken,
   getCurrentUser,
+  deleteRefreshToken,
 };

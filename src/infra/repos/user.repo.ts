@@ -63,6 +63,12 @@ const revokeRefreshToken = async (userId: string) => {
   });
 };
 
+const deleteRefreshToken = async (refreshToken: string) => {
+  return await prisma.account.deleteMany({
+    where: { refreshToken },
+  });
+};
+
 export const userRepos = {
   createUser,
   storeRefreshToken,
@@ -70,4 +76,5 @@ export const userRepos = {
   getUserByEmail,
   validateRefreshToken,
   revokeRefreshToken,
+  deleteRefreshToken,
 };

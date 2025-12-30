@@ -52,6 +52,23 @@ export const loginUser = async (req: Request, res: Response) => {
   });
 };
 
+export const logoutUser = async (req: Request, res: Response) => {
+  const refreshTokenFromCookie = req.cookies.refreshToken;
+  if (!refreshTokenFromCookie) {
+    return sendErrorResponse(res, 401, "No refresh token provided");
+  }
+
+  await AuthService.deleteRefreshToken(refreshTokenFromCookie);
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: false,
+  });
+
+  sendSuccessResponse(res, 200, "User logged out successfully");
+};
+
 export const checkEmail = async (req: Request, res: Response) => {
   const email = req.query.email as string;
 
