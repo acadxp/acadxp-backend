@@ -79,8 +79,6 @@ const isEmailAlreadyUsed = async (email: string): Promise<boolean> => {
 
 // Refresh access token using refresh token
 const refreshAccessToken = async (refreshToken: string) => {
-  const secret = process.env.JWT_REFRESH_SECRET as string;
-
   // verify refresh token
   const decoded = await userRepos.validateRefreshToken(refreshToken);
 

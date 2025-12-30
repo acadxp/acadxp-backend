@@ -23,11 +23,11 @@ export const createUser = async (req: Request, res: Response) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    sameSite: false,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  return sendSuccessResponse(res, 201, "User registered successfully", {
+  sendSuccessResponse(res, 201, "User registered successfully", {
     user: userWithoutPwd,
     accessToken,
   });
@@ -36,19 +36,17 @@ export const createUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  const { userWithoutPwd, accessToken } = await AuthService.loginUser(
-    email,
-    password
-  );
+  const { userWithoutPwd, accessToken, refreshToken } =
+    await AuthService.loginUser(email, password);
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    sameSite: false,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  return sendSuccessResponse(res, 200, "User logged in successfully", {
+  sendSuccessResponse(res, 200, "User logged in successfully", {
     user: userWithoutPwd,
     accessToken,
   });
@@ -93,7 +91,7 @@ export const refreshToken = async (req: Request, res: Response) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    sameSite: false,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
