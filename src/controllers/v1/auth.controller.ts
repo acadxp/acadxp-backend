@@ -20,13 +20,6 @@ export const createUser = async (req: Request, res: Response) => {
   const { userWithoutPwd, accessToken, refreshToken } =
     await AuthService.registerUser(data);
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 60 * 60 * 1000, // 1 hour
-  });
-
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
@@ -34,12 +27,10 @@ export const createUser = async (req: Request, res: Response) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  return sendSuccessResponse(
-    res,
-    201,
-    "User registered successfully",
-    userWithoutPwd
-  );
+  return sendSuccessResponse(res, 201, "User registered successfully", {
+    user: userWithoutPwd,
+    accessToken,
+  });
 };
 
 export const loginUser = async (req: Request, res: Response) => {
@@ -50,13 +41,6 @@ export const loginUser = async (req: Request, res: Response) => {
     password
   );
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 60 * 60 * 1000, // 1 hour
-  });
-
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
@@ -64,12 +48,10 @@ export const loginUser = async (req: Request, res: Response) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  return sendSuccessResponse(
-    res,
-    200,
-    "User logged in successfully",
-    userWithoutPwd
-  );
+  return sendSuccessResponse(res, 200, "User logged in successfully", {
+    user: userWithoutPwd,
+    accessToken,
+  });
 };
 
 export const checkEmail = async (req: Request, res: Response) => {
@@ -94,7 +76,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   );
 
   return sendSuccessResponse(res, 200, "Current user fetched", {
-    userWithoutPwd,
+    user: userWithoutPwd,
     accessToken,
   });
 };
@@ -108,13 +90,6 @@ export const refreshToken = async (req: Request, res: Response) => {
   const { userWithoutPwd, accessToken, refreshToken } =
     await AuthService.refreshAccessToken(refreshTokenFromCookie);
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 60 * 60 * 1000, // 1 hour
-  });
-
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
@@ -123,6 +98,7 @@ export const refreshToken = async (req: Request, res: Response) => {
   });
 
   return sendSuccessResponse(res, 200, "Access token refreshed", {
-    userWithoutPwd,
+    user: userWithoutPwd,
+    accessToken,
   });
 };
