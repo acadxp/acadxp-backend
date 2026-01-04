@@ -16,4 +16,11 @@ const createAcademicInfo = async (data: Partial<AcademicInfo>) => {
   return await academicInfosRepos.createAcademicInfo(processedData);
 };
 
-export const academicInfosService = { createAcademicInfo };
+const getAcademicInfoByProfileId = async (profileId: string) => {
+  return await academicInfosRepos.getAcademicInfoByProfileId(profileId);
+};
+
+export const academicInfosService = {
+  createAcademicInfo,
+  getAcademicInfoByProfileId,
+};

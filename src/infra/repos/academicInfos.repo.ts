@@ -7,4 +7,13 @@ const createAcademicInfo = async (data: Partial<AcademicInfo>) => {
   });
 };
 
-export const academicInfosRepos = { createAcademicInfo };
+const getAcademicInfoByProfileId = async (profileId: string) => {
+  return await prisma.academicInfo.findUnique({
+    where: { profileId },
+  });
+};
+
+export const academicInfosRepos = {
+  createAcademicInfo,
+  getAcademicInfoByProfileId,
+};
