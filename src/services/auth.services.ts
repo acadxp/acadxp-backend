@@ -6,7 +6,13 @@ import { sanitizeUser } from "../utils/manageUser";
 import { verifyPassword } from "../lib/managePassword";
 
 // Register a new user
-const registerUser = async (data: ICreateUser): Promise<User> => {
+const registerUser = async (
+  data: ICreateUser
+): Promise<{
+  userWithoutPwd: any;
+  accessToken: string;
+  refreshToken: string;
+}> => {
   const newUser = await userRepos.createUser(data);
 
   const userWithoutPwd = sanitizeUser(newUser);
