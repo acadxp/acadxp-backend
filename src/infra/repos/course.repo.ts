@@ -8,6 +8,11 @@ const createCourse = async (data: Course) => {
   return course;
 };
 
+const findAllCourses = async () => {
+  const courses = await prisma.course.findMany();
+  return courses;
+};
+
 const findByCourseCode = async (courseCode: string) => {
   return await prisma.course.findUnique({
     where: { courseCode },
@@ -43,9 +48,24 @@ const searchSimilarCourses = async (title: string, courseCode: string) => {
   });
 };
 
+const getById = async (id: string) => {
+  return await prisma.course.findUnique({
+    where: { id },
+  });
+};
+
+const deleteCourse = async (id: string) => {
+  return await prisma.course.delete({
+    where: { id },
+  });
+};
+
 export const CourseRepo = {
   createCourse,
   findByCourseCode,
   findByTitleAndDepartment,
   searchSimilarCourses,
+  findAllCourses,
+  getById,
+  deleteCourse,
 };

@@ -4,7 +4,10 @@ import {
 } from "../../utils/http-response";
 import type { Request, Response } from "express";
 import { CourseService } from "../../services/course.services";
-import { createCourseSchema } from "../../validation/course.schema";
+import {
+  createCourseSchema,
+  createCourseIdSchema,
+} from "../../validation/course.schema";
 
 export const createCourseHandler = async (req: Request, res: Response) => {
   const { courseCode, title, description, xp, department } = req.body;
@@ -26,13 +29,13 @@ export const createCourseHandler = async (req: Request, res: Response) => {
     res,
     201,
     "Course created successfully",
-    newCourse
+    newCourse,
   );
 };
 
 export const checkCourseAvailabilityHandler = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { courseCode, title, description, xp, department } = req.body;
 
@@ -50,4 +53,33 @@ export const checkCourseAvailabilityHandler = async (
     success: true,
     data: result,
   });
+};
+
+export const getAllCoursesHandler = async (req: Request, res: Response) => {
+  const courses = await CourseService.getAllCourses();
+
+  return sendSuccessResponse(
+    res,
+    200,
+    "Courses retrieved successfully",
+    courses,
+  );
+};
+
+export const getCourseByIdHandler = async (req: Request, res: Response) => {
+  const { courseId } = req.params;
+
+  const data = createCourseIdSchema.parse({ courseId });
+
+  const course = await CourseService.getCourseById(data.courseId);
+  return sendSuccessResponse(res, 200, "Course Found", course);
+};
+
+export const deleteCourseHandler = async (req: Request, res: Response) => {
+  const { courseId } = req.params;
+
+  const data = createCourseIdSchema.parse({ courseId });
+
+  await CourseService.deleteCourse(data.courseId);
+  return sendSuccessResponse(res, 200, "Course deleted successfully");
 };

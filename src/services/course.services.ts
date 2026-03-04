@@ -12,13 +12,13 @@ const createCourse = async (data: CreateCourseInput) => {
     if (existingCheck.reason === "COURSE_CODE_EXISTS") {
       throw new HttpError(
         409,
-        `Course with code "${courseCode}" already exists`
+        `Course with code "${courseCode}" already exists`,
       );
     }
     if (existingCheck.reason === "TITLE_EXISTS_IN_DEPARTMENT") {
       throw new HttpError(
         409,
-        `Course "${title}" already exists in ${department} department. Consider enrolling in the existing course.`
+        `Course "${title}" already exists in ${department} department. Consider enrolling in the existing course.`,
       );
     }
   }
@@ -29,7 +29,7 @@ const createCourse = async (data: CreateCourseInput) => {
 const findExistingCourse = async (
   courseCode: string,
   title: string,
-  department: string
+  department: string,
 ) => {
   // Check if course code already exists
   const existingByCode = await CourseRepo.findByCourseCode(courseCode);
@@ -44,7 +44,7 @@ const findExistingCourse = async (
   // Check if same title exists in same department
   const existingByTitle = await CourseRepo.findByTitleAndDepartment(
     title,
-    department
+    department,
   );
   if (existingByTitle) {
     return {
@@ -60,7 +60,7 @@ const findExistingCourse = async (
 const searchSimilarCourses = async (title: string, courseCode: string) => {
   const similarCourses = await CourseRepo.searchSimilarCourses(
     title,
-    courseCode
+    courseCode,
   );
   return similarCourses;
 };
@@ -76,9 +76,33 @@ const checkBeforeCreate = async (data: CreateCourseInput) => {
     existingCourse: existingCheck.course,
     reason: existingCheck.reason,
     similarCourses: similarCourses.filter(
-      (c) => c.id !== existingCheck.course?.id
+      (c) => c.id !== existingCheck.course?.id,
     ),
   };
+};
+
+const getAllCourses = async () => {
+  return await CourseRepo.findAllCourses();
+};
+
+const getCourseById = async (id: string) => {
+  const course = await CourseRepo.getById(id);
+
+  if (!course) {
+    throw new HttpError(404, "Course not found");
+  }
+
+  return course;
+};
+
+const deleteCourse = async (id: string) => {
+  const isExist = await CourseRepo.getById(id);
+
+  if (!isExist) {
+    throw new HttpError(404, "Course not found");
+  }
+
+  return await CourseRepo.deleteCourse(id);
 };
 
 export const CourseService = {
@@ -86,4 +110,7 @@ export const CourseService = {
   findExistingCourse,
   searchSimilarCourses,
   checkBeforeCreate,
+  getAllCourses,
+  getCourseById,
+  deleteCourse,
 };

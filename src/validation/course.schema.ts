@@ -18,4 +18,8 @@ export const createCourseSchema = z.object({
   ]),
 });
 
+export const createCourseIdSchema = z.object({
+  courseId: z.string(),
+});
+
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;
