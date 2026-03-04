@@ -20,7 +20,18 @@ const getAcademicInfoByProfileId = async (profileId: string) => {
   return await academicInfosRepos.getAcademicInfoByProfileId(profileId);
 };
 
+const getAcademicInfoByUserId = async (userId: string) => {
+  const acadInfo = await academicInfosRepos.getAcademicInfoByUserId(userId);
+
+  if (!acadInfo) {
+    throw new Error("Academic information not found for the user");
+  }
+
+  return acadInfo;
+};
+
 export const academicInfosService = {
   createAcademicInfo,
   getAcademicInfoByProfileId,
+  getAcademicInfoByUserId,
 };

@@ -7,6 +7,8 @@ import {
   getCourseByIdHandler,
   deleteCourseHandler,
 } from "../../controllers/v1/course.controller";
+import { createCourseEnrollment } from "../../controllers/v1/course-enrollement.controller";
+import { authMiddleware } from "../../middlewares/auth.middleware";
 
 const CourseRoutes = express.Router();
 
@@ -15,5 +17,10 @@ CourseRoutes.post("/check", asyncHandler(checkCourseAvailabilityHandler));
 CourseRoutes.get("/all", asyncHandler(getAllCoursesHandler));
 CourseRoutes.get("/:courseId", asyncHandler(getCourseByIdHandler));
 CourseRoutes.delete("/:courseId", asyncHandler(deleteCourseHandler));
+CourseRoutes.post(
+  "/:courseId/enroll",
+  asyncHandler(authMiddleware),
+  asyncHandler(createCourseEnrollment),
+);
 
 export default CourseRoutes;
