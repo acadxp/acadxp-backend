@@ -15,4 +15,36 @@ const createCourseEnrollemnt = async (
   return courseEnrollment;
 };
 
-export const CourseEnrollmentRepo = { createCourseEnrollemnt };
+const getCourseEnrollmentByAcadId = async (
+  acadId: string,
+): Promise<CourseEnrollment[]> => {
+  const courseEnrollments = await prisma.studentCourseEnrollment.findMany({
+    where: {
+      academicInfoId: acadId,
+    },
+    include: {
+      course: true,
+    },
+  });
+
+  return courseEnrollments;
+};
+
+const unEnrollFromCourse = async (courseId: string, acadId: string) => {
+  const courseEnrollment = await prisma.studentCourseEnrollment.delete({
+    where: {
+      academicInfoId_courseId: {
+        academicInfoId: acadId,
+        courseId,
+      },
+    },
+  });
+
+  return courseEnrollment;
+};
+
+export const CourseEnrollmentRepo = {
+  createCourseEnrollemnt,
+  getCourseEnrollmentByAcadId,
+  unEnrollFromCourse,
+};
