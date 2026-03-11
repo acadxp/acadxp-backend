@@ -8,6 +8,7 @@ import {
   deleteCourseHandler,
 } from "../../controllers/v1/course.controller";
 import { createCourseEnrollment } from "../../controllers/v1/course-enrollement.controller";
+import { generateCourseBlueprint } from "../../controllers/v1/ai-course-blueprint.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 
 const CourseRoutes = express.Router();
@@ -21,6 +22,10 @@ CourseRoutes.post(
   "/:courseId/enroll",
   asyncHandler(authMiddleware),
   asyncHandler(createCourseEnrollment),
+);
+CourseRoutes.post(
+  "/:courseId/generate-blueprint",
+  asyncHandler(generateCourseBlueprint),
 );
 
 export default CourseRoutes;
