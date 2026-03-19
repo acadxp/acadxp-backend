@@ -1,61 +1,69 @@
 import * as z from "zod";
 
-// Individual rule schema
+// ✅ Flat, clean enums — no custom messages
+export const RuleTypeEnum = z.enum([
+  "COUNT",
+  "SCORE",
+  "COMPLETION",
+  "SUBMISSION",
+  "GRADE",
+]);
+export const OperatorEnum = z.enum(["GTE", "GT", "EQ"]);
+export const LogicEnum = z.enum(["AND", "OR"]);
+export const DifficultyEnum = z.enum(["easy", "medium", "hard"]);
+
+// ✅ Rule schema — removed optional metadata to keep it simple for AI
 export const RuleSchema = z.object({
-  type: z.enum(["COUNT", "SCORE", "COMPLETION", "SUBMISSION", "GRADE"]),
+  type: RuleTypeEnum,
   target: z.string(),
-  operator: z.enum(["GTE", "GT", "EQ"]),
+  operator: OperatorEnum,
   value: z.number(),
-  metadata: z
-    .object({
-      courseId: z.string(),
-    })
-    .optional(),
 });
 
-// Criteria schema with multiple rules and logic
+// ✅ Criteria schema — removed .default() as Mistral doesn't handle it well
 export const CriteriaSchema = z.object({
-  logic: z.enum(["AND", "OR"]).default("AND"),
-  rules: z.array(RuleSchema).min(1, "At least one rule is required"),
+  logic: LogicEnum,
+  rules: z.array(RuleSchema),
 });
 
-export const aiChallengeBluePrintSchema = z.object({
-  title: z.string().min(10, "Title is required"),
-  description: z.string().min(10, "Description is required"),
-  difficulty: z.enum(["easy", "medium", "hard"], {
-    message: "Difficulty level must be one of 'easy', 'medium', or 'hard'",
-  }),
-  xpReward: z.number().int().positive("XP reward must be a positive integer"),
+// ✅ Skill schema — criteria is required (AI struggles with optional nested objects)
+export const aiSkillBluePrintSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  xpValue: z.number(),
+  iconPrompt: z.string(),
   criteria: CriteriaSchema,
 });
 
-export const aiSkillBluePrintSchema = z.object({
-  title: z.string().min(3, "Title is required"),
-  description: z.string().min(10, "Description is required"),
-  xpValue: z.number().int().positive("XP value must be a positive integer"),
-  iconPrompt: z.string().min(10, "Icon prompt is required"),
-  criteria: CriteriaSchema.optional(),
+// ✅ Challenge schema
+export const aiChallengeBluePrintSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  difficulty: DifficultyEnum,
+  xpReward: z.number(),
+  criteria: CriteriaSchema,
 });
 
+// ✅ Badge schema
 export const aiBadgeBluePrintSchema = z.object({
-  title: z.string().min(3, "Title is required"),
-  description: z.string().min(10, "Description is required"),
-  xpValue: z.number().int().positive("XP value must be a positive integer"),
-  iconPrompt: z.string().min(10, "Icon prompt is required"),
-  criteria: CriteriaSchema.optional(),
+  title: z.string(),
+  description: z.string(),
+  xpValue: z.number(),
+  iconPrompt: z.string(),
+  criteria: CriteriaSchema,
 });
 
+// ✅ Root blueprint schema — the one passed to responseFormat
 export const aiBluePrintSchema = z.object({
-  skills: z
-    .array(aiSkillBluePrintSchema)
-    .min(3, "At least three skill is required"),
-  challenges: z
-    .array(aiChallengeBluePrintSchema)
-    .min(3, "At least three challenge is required"),
-  badges: z
-    .array(aiBadgeBluePrintSchema)
-    .min(3, "At least three badge is required"),
+  skills: z.array(aiSkillBluePrintSchema),
+  challenges: z.array(aiChallengeBluePrintSchema),
+  badges: z.array(aiBadgeBluePrintSchema),
 });
 
-// Type inference
-export type aiBluePrintSchema = z.infer<typeof aiBluePrintSchema>;
+// ✅ Inferred types
+export type Rule = z.infer<typeof RuleSchema>;
+export type Criteria = z.infer<typeof CriteriaSchema>;
+export type AiSkillBluePrint = z.infer<typeof aiSkillBluePrintSchema>;
+export type AiChallengeBluePrint = z.infer<typeof aiChallengeBluePrintSchema>;
+export type AiBadgeBluePrint = z.infer<typeof aiBadgeBluePrintSchema>;
+export type AiBluePrint = z.infer<typeof aiBluePrintSchema>;
