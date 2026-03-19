@@ -19,23 +19,11 @@ const findByCourseCode = async (courseCode: string) => {
   });
 };
 
-const findByTitleAndDepartment = async (title: string, department: string) => {
-  return await prisma.course.findFirst({
-    where: {
-      title: {
-        equals: title,
-        mode: "insensitive",
-      },
-      department: department as any,
-    },
-  });
-};
-
 const searchSimilarCourses = async (title: string, courseCode: string) => {
   return await prisma.course.findMany({
     where: {
       OR: [
-        { courseCode },
+        { courseCode: { equals: courseCode, mode: "insensitive" } },
         {
           title: {
             contains: title,
@@ -45,6 +33,7 @@ const searchSimilarCourses = async (title: string, courseCode: string) => {
       ],
     },
     take: 5,
+    orderBy: { createdAt: "desc" },
   });
 };
 
@@ -63,7 +52,6 @@ const deleteCourse = async (id: string) => {
 export const CourseRepo = {
   createCourse,
   findByCourseCode,
-  findByTitleAndDepartment,
   searchSimilarCourses,
   findAllCourses,
   getById,

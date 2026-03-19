@@ -18,6 +18,11 @@ export const createCourseSchema = z.object({
   ]),
 });
 
+export const searchCourseSchema = z.object({
+  courseCode: z.string(),
+  title: z.string(),
+});
+
 export const createCourseIdSchema = z.object({
   courseId: z.string(),
 });

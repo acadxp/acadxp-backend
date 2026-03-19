@@ -6,6 +6,7 @@ import type { Request, Response } from "express";
 import { CourseService } from "../../services/course.services";
 import {
   createCourseSchema,
+  searchCourseSchema,
   createCourseIdSchema,
 } from "../../validation/course.schema";
 
@@ -33,26 +34,17 @@ export const createCourseHandler = async (req: Request, res: Response) => {
   );
 };
 
-export const checkCourseAvailabilityHandler = async (
-  req: Request,
-  res: Response,
-) => {
-  const { courseCode, title, description, xp, department } = req.body;
+export const searchCoursesHandler = async (req: Request, res: Response) => {
+  const { title = "", courseCode = "" } = req.query as {
+    title?: string;
+    courseCode?: string;
+  };
 
-  const data = createCourseSchema.parse({
-    courseCode,
-    title,
-    ...(description && { description }),
-    xp,
-    department,
-  });
+  const data = searchCourseSchema.parse({ title, courseCode });
 
-  const result = await CourseService.checkBeforeCreate(data);
+  const result = await CourseService.searchCourses(data.courseCode, data.title);
 
-  return res.status(200).json({
-    success: true,
-    data: result,
-  });
+  return sendSuccessResponse(res, 200, "Search completed", result);
 };
 
 export const getAllCoursesHandler = async (req: Request, res: Response) => {
