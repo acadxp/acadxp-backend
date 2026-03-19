@@ -43,7 +43,7 @@ CourseRoutes.delete(
   asyncHandler(unEnrollFromCourse),
 );
 CourseRoutes.post(
-  "/:courseId/generate-blueprint",
+  "/:courseId/blueprint",
   asyncHandler(generateCourseBlueprint),
 );
 

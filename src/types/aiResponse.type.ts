@@ -57,7 +57,7 @@ export interface Meta {
   totalChallenges: number;
   totalBadges: number;
   totalXPAvailable: number;
-  sourceModel: string | null;
+  sourceModel: string;
   conversationId: string | null;
   usage: UsageStats | null;
   parsedAt: string;
@@ -109,3 +109,19 @@ export interface RawGamificationData {
   challenges?: unknown[];
   badges?: unknown[];
 }
+
+export type CreateBlueprintInput = {
+  courseId: string;
+  generatedChallenges: object;
+  generatedSkills: object;
+  generatedBadges: object;
+  aiModel: string;
+  aiVersion?: string;
+  promptVersion?: string;
+};
+
+export type AIBlueprintStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "PARTIALLY_ACCEPTED";

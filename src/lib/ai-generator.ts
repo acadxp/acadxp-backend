@@ -1,5 +1,4 @@
 import { Mistral } from "@mistralai/mistralai";
-import { aiBluePrintSchema } from "../validation/course-blue-print.schema";
 import dotenv from "dotenv";
 import type { MessageInputEntry } from "@mistralai/mistralai/models/components";
 
