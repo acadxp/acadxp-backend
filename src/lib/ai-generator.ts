@@ -186,7 +186,7 @@ type CourseInfo = {
 const buildCoursePrompt = (courseInfo: CourseInfo) => {
   const { courseId, courseTitle, courseDescription, academicLevel } =
     courseInfo;
-  return `Generate a gamified blueprint for the following academic course.\n\nCourse ID: ${courseId}\nCourse title: ${courseTitle}\nCourse description: ${courseDescription}\nAcademic level: ${academicLevel}\n\nRules:\n- Generate between 5 and 8 skills\n- Generate between 3 and 5 challenges\n- Generate between 2 and 3 badges\n- XP must be realistic and balanced\n- Challenges must reference real academic activities\n- Avoid vague or generic content\n- Ensure a mix of easy, medium, and hard challenges\n- Use the provided course information to create relevant and engaging content`;
+  return `Generate a gamified blueprint for the following academic course.\n\nCourse ID: ${courseId}\nCourse title: ${courseTitle}\nCourse description: ${courseDescription}\nAcademic level: ${academicLevel}\n\nRules:\n- Generate between 3 and 5 skills\n- Generate between 5 and 8 challenges\n- Generate between 2 and 3 badges\n- XP must be realistic and balanced\n- Challenges must reference real academic activities\n- Avoid vague or generic content\n- Ensure a mix of easy, medium, and hard challenges\n- Use the provided course information to create relevant and engaging content`;
 };
 
 export const aiGeneratedBluePrint = async (courseInfo: CourseInfo) => {
@@ -199,24 +199,22 @@ export const aiGeneratedBluePrint = async (courseInfo: CourseInfo) => {
     },
   ];
 
-  const completionArgs = {
-    temperature: 0.1,
-    maxTokens: 4096,
-    topP: 1,
-    responseFormat: {
-      type: "json_schema",
-      jsonSchema: {
-        name: "response_schema",
-        schemaDefinition: schemaDefinition,
-      },
-    },
-  };
-
   const chatResponse = await client.beta.conversations.start({
     inputs: messages,
     model: "mistral-large-latest",
     instructions: systemPrompt,
-    ...completionArgs,
+    completionArgs: {
+      temperature: 0.1,
+      maxTokens: 4096,
+      topP: 1,
+      responseFormat: {
+        type: "json_schema",
+        jsonSchema: {
+          name: "response_schema",
+          schemaDefinition: schemaDefinition,
+        },
+      },
+    },
   });
 
   return chatResponse;
