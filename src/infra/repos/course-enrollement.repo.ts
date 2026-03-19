@@ -30,6 +30,22 @@ const getCourseEnrollmentByAcadId = async (
   return courseEnrollments;
 };
 
+const findExistingEnrollment = async (
+  courseId: string,
+  acadId: string,
+): Promise<CourseEnrollment | null> => {
+  const existingEnrollment = await prisma.studentCourseEnrollment.findUnique({
+    where: {
+      academicInfoId_courseId: {
+        academicInfoId: acadId,
+        courseId,
+      },
+    },
+  });
+
+  return existingEnrollment;
+};
+
 const unEnrollFromCourse = async (courseId: string, acadId: string) => {
   const courseEnrollment = await prisma.studentCourseEnrollment.delete({
     where: {
@@ -47,4 +63,5 @@ export const CourseEnrollmentRepo = {
   createCourseEnrollemnt,
   getCourseEnrollmentByAcadId,
   unEnrollFromCourse,
+  findExistingEnrollment,
 };

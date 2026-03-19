@@ -1,10 +1,27 @@
 import { CourseEnrollmentRepo } from "../infra/repos/course-enrollement.repo";
+import { CourseRepo } from "../infra/repos/course.repo";
 import { academicInfosService } from "./academicInfos.services";
 import { HttpError } from "../error/httpError";
 
 const createCourseEnrollemnt = async (courseId: string, userId: string) => {
+  // check the course exists
+  const course = await CourseRepo.getById(courseId);
+
+  if (!course) {
+    throw new HttpError(404, "Course not found");
+  }
+
   // get academic info for the user
   const acadInfo = await academicInfosService.getAcademicInfoByUserId(userId);
+
+  const existingEnrollment = await CourseEnrollmentRepo.findExistingEnrollment(
+    courseId,
+    acadInfo.id,
+  );
+
+  if (existingEnrollment) {
+    throw new HttpError(400, "You are already enrolled in this course");
+  }
 
   const courseEnrollment = await CourseEnrollmentRepo.createCourseEnrollemnt(
     courseId,

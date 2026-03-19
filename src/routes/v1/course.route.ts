@@ -7,7 +7,11 @@ import {
   getCourseByIdHandler,
   deleteCourseHandler,
 } from "../../controllers/v1/course.controller";
-import { createCourseEnrollment } from "../../controllers/v1/course-enrollement.controller";
+import {
+  createCourseEnrollment,
+  getCourseEnrollmentByAcadId,
+  unEnrollFromCourse,
+} from "../../controllers/v1/course-enrollement.controller";
 import { generateCourseBlueprint } from "../../controllers/v1/ai-course-blueprint.controller";
 import { validateSearchCourses } from "../../middlewares/validation.middleware";
 import { authMiddleware } from "../../middlewares/auth.middleware";
@@ -27,6 +31,16 @@ CourseRoutes.post(
   "/:courseId/enroll",
   asyncHandler(authMiddleware),
   asyncHandler(createCourseEnrollment),
+);
+CourseRoutes.get(
+  "/enrollments",
+  asyncHandler(authMiddleware),
+  asyncHandler(getCourseEnrollmentByAcadId),
+);
+CourseRoutes.delete(
+  "/:courseId/enroll",
+  asyncHandler(authMiddleware),
+  asyncHandler(unEnrollFromCourse),
 );
 CourseRoutes.post(
   "/:courseId/generate-blueprint",

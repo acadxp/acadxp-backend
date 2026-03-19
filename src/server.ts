@@ -6,7 +6,6 @@ import ProfileRoutes from "./routes/v1/profile.routes";
 import AcademicInfosRoutes from "./routes/v1/academicInfos.routes";
 import AuthRoutes from "./routes/v1/auth.routes";
 import CourseRoutes from "./routes/v1/course.route";
-import EnrollmentRouter from "./routes/v1/course-enrollement.routes";
 import { errorHandler } from "./middlewares/error.middleware";
 
 dotenv.config();
@@ -32,7 +31,6 @@ app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/users", ProfileRoutes);
 app.use("/api/v1/academic-infos", AcademicInfosRoutes);
 app.use("/api/v1/courses", CourseRoutes);
-app.use("/api/v1/enrollments", EnrollmentRouter);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "OK", message: "Server is healthy" });
