@@ -44,6 +44,7 @@ CourseRoutes.delete(
 );
 CourseRoutes.post(
   "/:courseId/blueprint",
+  asyncHandler(authMiddleware),
   asyncHandler(generateCourseBlueprint),
 );
 
