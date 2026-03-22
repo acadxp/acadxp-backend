@@ -16,4 +16,22 @@ const createAcademicInfo = async (data: Partial<AcademicInfo>) => {
   return await academicInfosRepos.createAcademicInfo(processedData);
 };
 
-export const academicInfosService = { createAcademicInfo };
+const getAcademicInfoByProfileId = async (profileId: string) => {
+  return await academicInfosRepos.getAcademicInfoByProfileId(profileId);
+};
+
+const getAcademicInfoByUserId = async (userId: string) => {
+  const acadInfo = await academicInfosRepos.getAcademicInfoByUserId(userId);
+
+  if (!acadInfo) {
+    throw new Error("Academic information not found for the user");
+  }
+
+  return acadInfo;
+};
+
+export const academicInfosService = {
+  createAcademicInfo,
+  getAcademicInfoByProfileId,
+  getAcademicInfoByUserId,
+};

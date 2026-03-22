@@ -35,7 +35,7 @@
     "isolatedModules": true,
 
     /* === Bun-specific === */
-    "types": ["bun-types"]
+    "types": ["bun-types", "jest"]
   },
   "include": ["src/**/*.ts", "src/lib/db.ts"],
   "exclude": [

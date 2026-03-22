@@ -153,6 +153,7 @@ model Course{
   description String?
   xp Int
   department Department @default(EDUCATION)
+  status CourseStatus @default(DRAFT)
 
   studentEnrollments StudentCourseEnrollment[]
   skills CourseSkill[]  
@@ -181,7 +182,7 @@ model AICourseBluePrint{
 
   aiModel String
   aiVersion String?
-  proimptVersion String?
+  promptVersion String?
 
   generatedAt DateTime @default(now())
   acceptedAt DateTime?
@@ -477,4 +478,10 @@ enum GoalType {
   CHALLENGE
   COURSE
   STREAK
+}
+enum CourseStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+  DRAFT
 }

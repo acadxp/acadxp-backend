@@ -44,8 +44,26 @@ export const createAcademicInfo = async (req: Request, res: Response) => {
     { academicInfo: createdAcademicInfo }
   );
 };
+
+export const getAcademicInfo = async (req: Request, res: Response) => {
+  const { profileId } = req.query;
+  if (!profileId) {
+    return sendErrorResponse(res, 400, "Profile ID is required");
+  }
+
+  const academicInfo = await academicInfosService.getAcademicInfoByProfileId(
+    profileId as string
+  );
+
+  if (!academicInfo) {
+    return sendErrorResponse(res, 404, "Academic information not found");
+  }
+
+  return sendSuccessResponse(res, 200, "Academic information retrieved", {
+    academicInfo,
+  });
+};
 /*
-export const getAcademicInfo = async (req: Request, res: Response) => {};
 export const updateAcademicInfo = async (req: Request, res: Response) => {};
 export const deleteAcademicInfo = async (req: Request, res: Response) => {};
 */
