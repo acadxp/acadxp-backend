@@ -41,7 +41,7 @@ export interface Challenge {
 export interface Badge {
   title: string;
   description: string;
-  xpValue: number;
+  xpReward: number;
   iconPrompt: string | null;
   criteria: Criteria;
 }
@@ -90,7 +90,7 @@ export interface RawOutput {
   object?: string;
   type?: string;
   id?: string;
-  model?: string;
+  model: string;
   role?: string;
   content?: unknown;
   createdAt?: string;

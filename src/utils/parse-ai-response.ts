@@ -152,19 +152,19 @@ function parseBadge(raw: unknown, index: number): Badge {
 
   const title = String(raw["title"] ?? "").trim();
   const description = String(raw["description"] ?? "").trim();
-  const xpValue = Number(raw["xpValue"]);
+  const xpReward = Number(raw["xpReward"]);
   const iconPrompt =
     raw["iconPrompt"] != null ? String(raw["iconPrompt"]).trim() : null;
 
   if (!title) throw new Error(`${path}.title is required`);
   if (!description) throw new Error(`${path}.description is required`);
-  if (isNaN(xpValue) || xpValue < 0)
+  if (isNaN(xpReward) || xpReward < 0)
     throw new Error(`${path}.xpValue must be a non-negative number`);
 
   return {
     title,
     description,
-    xpValue,
+    xpReward,
     iconPrompt,
     criteria: parseCriteria(raw["criteria"], path),
   };
@@ -174,7 +174,7 @@ function parseBadge(raw: unknown, index: number): Badge {
 
 function extractFromConversationResponse(response: RawConversationResponse): {
   gamificationRaw: RawGamificationData;
-  sourceModel: string | null;
+  sourceModel: string;
   conversationId: string | null;
   usage: UsageStats | null;
 } {
@@ -252,7 +252,7 @@ export function parseAIResponse(input: unknown): ParseResult {
 
   // 2. Detect & unwrap conversation response envelope
   let gamificationRaw: RawGamificationData = raw as RawGamificationData;
-  let sourceModel: string | null = null;
+  let sourceModel: string = "unknown";
   let conversationId: string | null = null;
   let usage: UsageStats | null = null;
 
@@ -307,7 +307,7 @@ export function parseAIResponse(input: unknown): ParseResult {
   const totalXP =
     skills.reduce((s, x) => s + x.xpValue, 0) +
     challenges.reduce((s, x) => s + x.xpReward, 0) +
-    badges.reduce((s, x) => s + x.xpValue, 0);
+    badges.reduce((s, x) => s + x.xpReward, 0);
 
   const data: GamificationData = {
     skills,

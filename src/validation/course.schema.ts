@@ -66,7 +66,7 @@ const GeneratedBadgeSchema = z.object({
 });
 
 export const confirmBlueprintSchema = z.object({
-  ConfirmPayload: z.object({
+  confirmPayload: z.object({
     selectedSkills: z.array(GeneratedSkillSchema),
     selectedChallenges: z.array(GeneratedChallengeSchema),
     selectedBadges: z.array(GeneratedBadgeSchema).optional(),

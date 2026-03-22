@@ -28,6 +28,11 @@ CourseRoutes.post(
   asyncHandler(searchCoursesHandler),
 );
 CourseRoutes.get("/all", asyncHandler(getAllCoursesHandler));
+CourseRoutes.get(
+  "/enrollments",
+  asyncHandler(authMiddleware),
+  asyncHandler(getCourseEnrollmentByAcadId),
+);
 CourseRoutes.get("/:courseId", asyncHandler(getCourseByIdHandler));
 CourseRoutes.delete("/:courseId", asyncHandler(deleteCourseHandler));
 CourseRoutes.post(
@@ -35,25 +40,20 @@ CourseRoutes.post(
   asyncHandler(authMiddleware),
   asyncHandler(createCourseEnrollment),
 );
-CourseRoutes.get(
-  "/enrollments",
-  asyncHandler(authMiddleware),
-  asyncHandler(getCourseEnrollmentByAcadId),
-);
 CourseRoutes.delete(
   "/:courseId/enroll",
   asyncHandler(authMiddleware),
   asyncHandler(unEnrollFromCourse),
 );
 CourseRoutes.post(
+  "/blueprint/confirm",
+  asyncHandler(authMiddleware),
+  asyncHandler(acceptCourseBlueprint),
+);
+CourseRoutes.post(
   "/:courseId/blueprint",
   asyncHandler(authMiddleware),
   asyncHandler(generateCourseBlueprint),
-);
-CourseRoutes.post(
-  "/:courseId/blueprint/confirm",
-  asyncHandler(authMiddleware),
-  asyncHandler(acceptCourseBlueprint),
 );
 
 export default CourseRoutes;
