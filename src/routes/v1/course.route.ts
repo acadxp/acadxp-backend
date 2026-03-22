@@ -12,7 +12,10 @@ import {
   getCourseEnrollmentByAcadId,
   unEnrollFromCourse,
 } from "../../controllers/v1/course-enrollement.controller";
-import { generateCourseBlueprint } from "../../controllers/v1/ai-course-blueprint.controller";
+import {
+  generateCourseBlueprint,
+  acceptCourseBlueprint,
+} from "../../controllers/v1/ai-course-blueprint.controller";
 import { validateSearchCourses } from "../../middlewares/validation.middleware";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 
@@ -46,6 +49,11 @@ CourseRoutes.post(
   "/:courseId/blueprint",
   asyncHandler(authMiddleware),
   asyncHandler(generateCourseBlueprint),
+);
+CourseRoutes.post(
+  "/:courseId/blueprint/confirm",
+  asyncHandler(authMiddleware),
+  asyncHandler(acceptCourseBlueprint),
 );
 
 export default CourseRoutes;
