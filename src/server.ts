@@ -7,6 +7,7 @@ import AcademicInfosRoutes from "./routes/v1/academicInfos.routes";
 import AuthRoutes from "./routes/v1/auth.routes";
 import CourseRoutes from "./routes/v1/course.route";
 import { errorHandler } from "./middlewares/error.middleware";
+import { info } from "node:console";
 
 dotenv.config();
 
@@ -34,6 +35,17 @@ app.use("/api/v1/courses", CourseRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "OK", message: "Server is healthy" });
+});
+
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Welcome to the Student Management System API",
+    author: {
+      name: "AcadXP Team",
+      link: "https://github.com/acadxp",
+    },
+    info: "This API allows you to manage student profiles, academic information, and courses.",
+  });
 });
 
 app.use(errorHandler);
