@@ -17,6 +17,13 @@ export const createUser = async (req: Request, res: Response) => {
     password,
   });
 
+  // check if email already exists
+  const emailExists = await AuthService.isEmailAlreadyUsed(data.email);
+
+  if (emailExists) {
+    return sendErrorResponse(res, 409, "Email is already in use");
+  }
+
   const { userWithoutPwd, accessToken, refreshToken } =
     await AuthService.registerUser(data);
 
@@ -87,7 +94,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
   const { userWithoutPwd, accessToken } = await AuthService.getCurrentUser(
-    userId!
+    userId!,
   );
 
   return sendSuccessResponse(res, 200, "Current user fetched", {
