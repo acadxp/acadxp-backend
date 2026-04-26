@@ -7,7 +7,6 @@ import AcademicInfosRoutes from "./routes/v1/academicInfos.routes";
 import AuthRoutes from "./routes/v1/auth.routes";
 import CourseRoutes from "./routes/v1/course.route";
 import { errorHandler } from "./middlewares/error.middleware";
-import { info } from "node:console";
 
 dotenv.config();
 
