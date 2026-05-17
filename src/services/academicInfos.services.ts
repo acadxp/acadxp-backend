@@ -1,8 +1,11 @@
-import type { AcademicInfo } from "../generated/prisma/client";
 import { academicInfosRepos } from "../infra/repos/academicInfos.repo";
 import { HttpError } from "../error/httpError";
+import type { createAcademicInfoSchema } from "../validation/academicInfos.schema";
+import type { z } from "zod";
 
-const createAcademicInfo = async (data: Partial<AcademicInfo>) => {
+type CreateAcademicInfoInput = z.infer<typeof createAcademicInfoSchema>;
+
+const createAcademicInfo = async (data: CreateAcademicInfoInput) => {
   // Transform YYYY-MM-DD dates to ISO-8601 DateTime format
   const processedData = {
     ...data,

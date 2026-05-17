@@ -3,7 +3,7 @@ import type { Profile } from "../generated/prisma/client";
 import type { IProfile } from "../types/profile.types";
 
 // get user profile by userId
-const getUserProfile = async (userId: string): Profile => {
+const getUserProfile = async (userId: string): Promise<Profile | null> => {
   const userProfile = await profileRepo.findProfileByUserId(userId);
   return userProfile;
 };

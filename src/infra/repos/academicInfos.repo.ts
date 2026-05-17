@@ -1,9 +1,9 @@
 import prisma from "../../lib/db";
-import type { AcademicInfo } from "../../generated/prisma/client";
+import type { Prisma } from "../../generated/prisma/client";
 import { profileRepo } from "./profile.repo";
 import { HttpError } from "../../error/httpError";
 
-const createAcademicInfo = async (data: Partial<AcademicInfo>) => {
+const createAcademicInfo = async (data: Prisma.AcademicInfoUncheckedCreateInput) => {
   return await prisma.academicInfo.create({
     data,
   });
