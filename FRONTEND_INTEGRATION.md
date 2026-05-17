@@ -33,11 +33,13 @@ export interface User {
   updatedAt: string;
 }
 
+export type UserWithoutPassword = Omit<User, "password">;
+
 export interface AuthResponse {
   success: boolean;
   message: string;
   data: {
-    user: User;
+    user: UserWithoutPassword;
     accessToken: string;
   };
 }
@@ -251,6 +253,17 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   errors?: string[];
 }
+
+// === WORKFLOW ===
+export type CourseCreationWorkflow =
+  | "IDLE"
+  | "SEARCHING"
+  | "DUPLICATE_FOUND"
+  | "CREATING"
+  | "GENERATING_BLUEPRINT"
+  | "REVIEWING_BLUEPRINT"
+  | "CONFIRMING"
+  | "SUCCESS";
 ```
 
 ---
@@ -263,15 +276,11 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1",
-  withCredentials: true, // required for httpOnly cookie (refreshToken)
-  headers: {
-    "Content-Type": "application/json",
-  },
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
 });
 
-// Attach access token from Zustand store to every request
 api.interceptors.request.use((config) => {
-  // We'll read token from a module-level variable set by the store
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -279,7 +288,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-refresh on 401
 let failedQueue: Array<{
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -318,7 +326,6 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         setAccessToken(null);
-        // redirect to login
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
@@ -334,21 +341,15 @@ api.interceptors.response.use(
 
 function processQueue(error: unknown, token: string | null) {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+    if (error) prom.reject(error);
+    else prom.resolve(token);
   });
   failedQueue = [];
 }
 
-// Module-level token store (bridge between Zustand and Axios)
 let _accessToken: string | null = null;
 export const getAccessToken = () => _accessToken;
-export const setAccessToken = (token: string | null) => {
-  _accessToken = token;
-};
+export const setAccessToken = (token: string | null) => { _accessToken = token; };
 
 export default api;
 ```
@@ -360,7 +361,7 @@ export default api;
 ```typescript
 // services/auth.service.ts
 import api from "@/lib/axios";
-import type { ApiResponse, AuthResponse, User } from "@/types";
+import type { ApiResponse, AuthResponse } from "@/types";
 
 export const authService = {
   register: (name: string, email: string, password: string) =>
@@ -399,10 +400,8 @@ export const profileService = {
     api.get<ApiResponse>("/users/profile/check-username", {
       params: { username },
     }),
-
-  getEnrollments: () =>
-    api.get<ApiResponse<StudentCourseEnrollment[]>>("/users/enrollments"),
 };
+// Enrollments are fetched via GET /courses/enrollments (see course service)
 ```
 
 ```typescript
@@ -437,19 +436,19 @@ import type {
   Course,
   StudentCourseEnrollment,
   GamificationData,
+  GeneratedSkill,
+  GeneratedChallenge,
+  GeneratedBadge,
 } from "@/types";
 
 export const courseService = {
-  getAll: () =>
-    api.get<ApiResponse<Course[]>>("/courses/all"),
+  getAll: () => api.get<ApiResponse<Course[]>>("/courses/all"),
 
   getById: (courseId: string) =>
     api.get<ApiResponse<Course>>(`/courses/${courseId}`),
 
   search: (params: { title?: string; courseCode?: string }) =>
-    api.post<ApiResponse<{ found: boolean; courses: Course[] }>>("/courses/search", null, {
-      params,
-    }),
+    api.post<ApiResponse<{ found: boolean; courses: Course[] }>>("/courses/search", null, { params }),
 
   create: (data: {
     courseCode: string;
@@ -512,7 +511,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
@@ -522,10 +521,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data } = await authService.register(name, email, password);
           setAccessToken(data.data.accessToken);
-          set({
-            user: data.data.user,
-            isAuthenticated: true,
-          });
+          set({ user: data.data.user, isAuthenticated: true });
         } finally {
           set({ isLoading: false });
         }
@@ -536,21 +532,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data } = await authService.login(email, password);
           setAccessToken(data.data.accessToken);
-          set({
-            user: data.data.user,
-            isAuthenticated: true,
-          });
+          set({ user: data.data.user, isAuthenticated: true });
         } finally {
           set({ isLoading: false });
         }
       },
 
       logout: async () => {
-        try {
-          await authService.logout();
-        } catch {
-          // clear even if request fails
-        }
+        try { await authService.logout(); } catch { /* clear anyway */ }
         setAccessToken(null);
         set({ user: null, isAuthenticated: false });
       },
@@ -570,15 +559,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
       onRehydrateStorage: () => (state) => {
-        // Restore access token on page load by trying refresh
-        if (state?.isAuthenticated) {
-          state.refreshSession();
-        }
+        if (state?.isAuthenticated) state.refreshSession();
       },
     },
   ),
@@ -589,22 +572,19 @@ export const useAuthStore = create<AuthState>()(
 // stores/profile.store.ts
 import { create } from "zustand";
 import { profileService } from "@/services/profile.service";
-import type { Profile, StudentCourseEnrollment } from "@/types";
+import type { Profile } from "@/types";
 
 interface ProfileState {
   profile: Profile | null;
-  enrollments: StudentCourseEnrollment[];
   isLoading: boolean;
 
   fetchProfile: () => Promise<void>;
   createProfile: (data: Parameters<typeof profileService.createProfile>[0]) => Promise<void>;
-  fetchEnrollments: () => Promise<void>;
   reset: () => void;
 }
 
 export const useProfileStore = create<ProfileState>((set) => ({
   profile: null,
-  enrollments: [],
   isLoading: false,
 
   fetchProfile: async () => {
@@ -622,12 +602,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
     set({ profile: data.data!.profile });
   },
 
-  fetchEnrollments: async () => {
-    const { data } = await profileService.getEnrollments();
-    set({ enrollments: data.data! });
-  },
-
-  reset: () => set({ profile: null, enrollments: [] }),
+  reset: () => set({ profile: null }),
 }));
 ```
 
@@ -635,7 +610,14 @@ export const useProfileStore = create<ProfileState>((set) => ({
 // stores/course.store.ts
 import { create } from "zustand";
 import { courseService } from "@/services/course.service";
-import type { Course, StudentCourseEnrollment, GamificationData } from "@/types";
+import type {
+  Course,
+  StudentCourseEnrollment,
+  GamificationData,
+  GeneratedSkill,
+  GeneratedChallenge,
+  GeneratedBadge,
+} from "@/types";
 
 interface CourseState {
   courses: Course[];
@@ -650,16 +632,8 @@ interface CourseState {
   enroll: (courseId: string) => Promise<void>;
   unenroll: (courseId: string) => Promise<void>;
   fetchEnrollments: () => Promise<void>;
-  generateBlueprint: (courseId: string, data: {
-    courseTitle: string;
-    courseDescription: string;
-    academicLevel: string;
-  }) => Promise<void>;
-  confirmBlueprint: (courseId: string, payload: {
-    selectedSkills: GeneratedSkill[];
-    selectedChallenges: GeneratedChallenge[];
-    selectedBadges?: GeneratedBadge[];
-  }) => Promise<void>;
+  generateBlueprint: (courseId: string, data: { courseTitle: string; courseDescription: string; academicLevel: string }) => Promise<void>;
+  confirmBlueprint: (courseId: string, payload: { selectedSkills: GeneratedSkill[]; selectedChallenges: GeneratedChallenge[]; selectedBadges?: GeneratedBadge[] }) => Promise<void>;
   reset: () => void;
 }
 
@@ -675,9 +649,7 @@ export const useCourseStore = create<CourseState>((set, get) => ({
     try {
       const { data } = await courseService.getAll();
       set({ courses: data.data! });
-    } finally {
-      set({ isLoading: false });
-    }
+    } finally { set({ isLoading: false }); }
   },
 
   fetchCourseById: async (id) => {
@@ -685,9 +657,7 @@ export const useCourseStore = create<CourseState>((set, get) => ({
     try {
       const { data } = await courseService.getById(id);
       set({ currentCourse: data.data! });
-    } finally {
-      set({ isLoading: false });
-    }
+    } finally { set({ isLoading: false }); }
   },
 
   searchCourses: async (params) => {
@@ -715,9 +685,7 @@ export const useCourseStore = create<CourseState>((set, get) => ({
     try {
       const { data } = await courseService.generateBlueprint(courseId, payload);
       set({ gamificationData: data.data! });
-    } finally {
-      set({ isLoading: false });
-    }
+    } finally { set({ isLoading: false }); }
   },
 
   confirmBlueprint: async (courseId, payload) => {
@@ -727,122 +695,347 @@ export const useCourseStore = create<CourseState>((set, get) => ({
   },
 
   reset: () => set({
-    courses: [],
-    currentCourse: null,
-    enrollments: [],
-    gamificationData: null,
+    courses: [], currentCourse: null, enrollments: [], gamificationData: null,
   }),
 }));
 ```
 
 ---
 
-## 5. API Endpoints Reference
+## 5. Course Creation Workflow Store
+
+This is the **state machine** that orchestrates the entire course creation + enrollment + AI blueprint flow.
+
+```typescript
+// stores/course-creation.store.ts
+import { create } from "zustand";
+import { courseService } from "@/services/course.service";
+import type {
+  Course,
+  CourseCreationWorkflow,
+  GamificationData,
+  GeneratedSkill,
+  GeneratedChallenge,
+  GeneratedBadge,
+} from "@/types";
+
+interface CourseCreationState {
+  workflow: CourseCreationWorkflow;
+  similarCourses: Course[];
+  createdCourse: Course | null;
+  gamificationData: GamificationData | null;
+  error: string | null;
+
+  startFlow: (formData: {
+    courseCode: string;
+    title: string;
+    description?: string;
+    xp: number;
+    department: string;
+    academicLevel: string;
+  }) => Promise<void>;
+
+  confirmBlueprint: (payload: {
+    selectedSkills: GeneratedSkill[];
+    selectedChallenges: GeneratedChallenge[];
+    selectedBadges?: GeneratedBadge[];
+  }) => Promise<void>;
+
+  enrollExisting: (courseId: string) => Promise<void>;
+  reset: () => void;
+}
+
+export const useCourseCreationStore = create<CourseCreationState>((set, get) => ({
+  workflow: "IDLE",
+  similarCourses: [],
+  createdCourse: null,
+  gamificationData: null,
+  error: null,
+
+  startFlow: async (formData) => {
+    const { courseCode, title, description, xp, department, academicLevel } = formData;
+    set({ error: null });
+
+    // ── Step 1: Search for duplicates ──────────────────────────────────
+    set({ workflow: "SEARCHING" });
+    try {
+      const searchResult = await courseService.search({ title, courseCode });
+      const similar = searchResult.data.data?.courses ?? [];
+
+      if (similar.length > 0) {
+        set({ similarCourses: similar, workflow: "DUPLICATE_FOUND" });
+        return;
+      }
+    } catch (e: any) {
+      set({ error: "Could not search courses", workflow: "IDLE" });
+      return;
+    }
+
+    // ── Step 2: Create the course ──────────────────────────────────────
+    set({ workflow: "CREATING" });
+    let course: Course;
+    try {
+      const { data } = await courseService.create({ courseCode, title, description, xp, department });
+      course = data.data!;
+      set({ createdCourse: course });
+    } catch (e: any) {
+      set({ error: "Failed to create course", workflow: "IDLE" });
+      return;
+    }
+
+    // ── Step 3: Generate AI Blueprint ──────────────────────────────────
+    set({ workflow: "GENERATING_BLUEPRINT" });
+    try {
+      const { data } = await courseService.generateBlueprint(course.id, {
+        courseTitle: title,
+        courseDescription: description ?? "",
+        academicLevel,
+      });
+      set({ gamificationData: data.data!, workflow: "REVIEWING_BLUEPRINT" });
+    } catch (e: any) {
+      set({ error: "Blueprint generation failed. Retry?", workflow: "IDLE" });
+    }
+  },
+
+  confirmBlueprint: async (payload) => {
+    const course = get().createdCourse;
+    if (!course) return;
+
+    set({ workflow: "CONFIRMING", error: null });
+    try {
+      await courseService.confirmBlueprint(course.id, payload);
+      set({ workflow: "SUCCESS", gamificationData: null });
+    } catch (e: any) {
+      set({ error: "Failed to confirm blueprint", workflow: "REVIEWING_BLUEPRINT" });
+    }
+  },
+
+  enrollExisting: async (courseId) => {
+    set({ workflow: "CONFIRMING", error: null });
+    try {
+      await courseService.enroll(courseId);
+      set({ workflow: "SUCCESS" });
+    } catch (e: any) {
+      set({ error: "Could not enroll in course", workflow: "DUPLICATE_FOUND" });
+    }
+  },
+
+  reset: () => set({
+    workflow: "IDLE",
+    similarCourses: [],
+    createdCourse: null,
+    gamificationData: null,
+    error: null,
+  }),
+}));
+```
+
+---
+
+## 6. Course Creation UI Components
+
+### CourseCreationForm
+Main form: `courseCode`, `title`, `description?`, `xp`, `department`, `academicLevel`.
+
+```tsx
+// app/courses/create/page.tsx
+"use client";
+import { useCourseCreationStore } from "@/stores/course-creation.store";
+
+export default function CreateCoursePage() {
+  const { workflow, error, startFlow, reset } = useCourseCreationStore();
+
+  const handleSubmit = (formData: FormData) => {
+    startFlow({
+      courseCode: formData.get("courseCode") as string,
+      title: formData.get("title") as string,
+      description: formData.get("description") as string,
+      xp: Number(formData.get("xp")),
+      department: formData.get("department") as string,
+      academicLevel: formData.get("academicLevel") as string,
+    });
+  };
+
+  if (workflow === "DUPLICATE_FOUND") return <SimilarCoursesModal />;
+  if (workflow === "REVIEWING_BLUEPRINT") return <BlueprintReview />;
+  if (workflow === "SUCCESS") return <SuccessView />;
+
+  return (
+    <form onSubmit={/* ... */}>
+      {/* stepper + fields */}
+      <CourseCreationStepper step={workflow} />
+      {/* ... */}
+    </form>
+  );
+}
+```
+
+### SimilarCoursesModal
+Shows duplicate courses found — user picks one to enroll directly.
+
+### BlueprintReview
+Renders `gamificationData.skills`, `.challenges`, `.badges` as selectable cards.
+User picks desired items then clicks "Confirm":
+
+```tsx
+const handleConfirm = () => {
+  confirmBlueprint({
+    selectedSkills: selectedItems,
+    selectedChallenges: selectedItems,
+    selectedBadges: selectedItems,
+  });
+};
+```
+
+### CourseCreationStepper
+```tsx
+const steps = [
+  { key: "SEARCHING", label: "Search" },
+  { key: "CREATING", label: "Create" },
+  { key: "GENERATING_BLUEPRINT", label: "Generate AI" },
+  { key: "REVIEWING_BLUEPRINT", label: "Review" },
+  { key: "CONFIRMING", label: "Confirm" },
+  { key: "SUCCESS", label: "Complete" },
+];
+```
+
+---
+
+## 7. API Endpoints Reference
 
 ### Base URL: `http://localhost:8001/api/v1`
+
+### Health
+
+| Method | Path | Auth | Response |
+|--------|------|------|----------|
+| GET | `/api/health` | No | `{ status: "OK", message: "Server is healthy" }` |
 
 ### Auth — `/auth`
 
 | Method | Path | Auth | Request | Response |
 |--------|------|------|---------|----------|
-| POST | `/register` | No | `{ name, email, password }` | `{ user, accessToken }` + sets `refreshToken` cookie |
-| POST | `/login` | No | `{ email, password }` | `{ user, accessToken }` + sets `refreshToken` cookie |
+| POST | `/register` | No | `{ name, email, password }` | `{ user: UserWithoutPassword, accessToken }` + `refreshToken` cookie |
+| POST | `/login` | No | `{ email, password }` | `{ user: UserWithoutPassword, accessToken }` + `refreshToken` cookie |
 | GET | `/check-email` | No | `?email=...` | `200` if available, `409` if taken |
-| POST | `/refresh-token` | Cookie | _(empty body)_ | `{ user, accessToken }` + new `refreshToken` cookie |
-| POST | `/logout` | Cookie | _(empty body)_ | Clears `refreshToken` cookie |
+| POST | `/refresh-token` | Cookie | _(empty)_ | `{ user: UserWithoutPassword, accessToken }` + new `refreshToken` cookie |
+| POST | `/logout` | Cookie | _(empty)_ | Clears `refreshToken` cookie |
 
 ### Users / Profile — `/users`
 
 | Method | Path | Auth | Request | Response |
 |--------|------|------|---------|----------|
-| GET | `/profile` | Bearer | — | `{ profile }` |
-| POST | `/profile/create` | Bearer | `{ username, bio?, location?, socials? }` | `{ profile }` |
+| GET | `/profile` | Bearer | — | `{ profile: Profile }` |
+| POST | `/profile/create` | Bearer | `{ username, bio?, location?, socials? }` | `{ profile: Profile }` |
 | GET | `/profile/check-username` | No | `?username=...` | `200` if available, `409` if taken |
-| GET | `/enrollments` | Bearer | — | `CourseEnrollment[]` |
 
 ### Academic Info — `/academic-infos`
 
 | Method | Path | Auth | Request | Response |
 |--------|------|------|---------|----------|
-| GET | `/me` | Bearer | `?profileId=...` | `{ academicInfo }` |
-| POST | `/create` | No | `{ profileId, institution?, degree?, major?, semester?, enrollmentStatus, graduationDate?, enrolledDate? }` | `{ academicInfo }` |
+| GET | `/me` | Bearer | `?profileId=...` | `{ academicInfo: AcademicInfo }` |
+| POST | `/create` | No | `{ profileId, institution?, degree?, major?, semester?, enrollmentStatus, graduationDate?, enrolledDate? }` | `{ academicInfo: AcademicInfo }` |
 
 ### Courses — `/courses`
 
 | Method | Path | Auth | Request | Response |
 |--------|------|------|---------|----------|
 | POST | `/create` | No | `{ courseCode, title, description?, xp, department }` | `Course` |
-| POST | `/search` | No | `?title=&courseCode=` | `{ found, courses[] }` |
+| POST | `/search` | No | `?title=&courseCode=` | `{ found: bool, courses: Course[] }` |
 | GET | `/all` | No | — | `Course[]` |
 | GET | `/:courseId` | No | — | `Course` |
 | DELETE | `/:courseId` | No | — | — |
-| POST | `/:courseId/enroll` | Bearer | — | `CourseEnrollment` |
+| POST | `/:courseId/enroll` | Bearer | — | `StudentCourseEnrollment` |
 | DELETE | `/:courseId/enroll` | Bearer | — | — |
-| POST | `/:courseId/blueprint` | Bearer | `{ courseTitle, courseDescription, academicLevel }` | `GamificationData` (skills, challenges, badges) |
+| GET | `/enrollments` | Bearer | — | `StudentCourseEnrollment[]` |
+| POST | `/:courseId/blueprint` | Bearer | `{ courseTitle, courseDescription, academicLevel }` | `GamificationData` |
 | POST | `/blueprint/confirm` | Bearer | `{ courseId, confirmPayload: { selectedSkills[], selectedChallenges[], selectedBadges?[] } }` | — |
 
 ---
 
-## 6. Auth Flow Diagram
+## 8. Auth Flow
 
 ```
 REGISTER / LOGIN
-  │
-  ├─ POST /auth/register  (or /login)
   │
   ├─ Response:
   │   ├─ body: { user, accessToken }
   │   └─ cookie: refreshToken (httpOnly, secure, sameSite=none, 7d)
   │
-  ├─ Store accessToken in Zustand + Axios module variable
+  ├─ Store accessToken in Zustand + Axios
+  ├─ All API calls: Authorization: Bearer <accessToken>
   │
-  ├─ All subsequent API calls include:
-  │   └─ Authorization: Bearer <accessToken>
-  │
-  ├─ When accessToken expires (401):
-  │   ├─ Axios interceptor catches 401
+  ├─ On 401:
+  │   ├─ Axios interceptor catches
   │   ├─ POST /auth/refresh-token (cookie sent automatically)
-  │   ├─ Receives new accessToken + new refreshToken cookie
-  │   └─ Retries the failed request
+  │   ├─ New accessToken + new refreshToken cookie
+  │   └─ Retries failed request
   │
-  └─ LOGOUT:
-      └─ POST /auth/logout → clears cookie + nullifies token
+  └─ LOGOUT: POST /auth/logout → clears cookie + nullifies token
 ```
 
-### Cookie Configuration (backend sends):
+### Cookie:
 ```
 Set-Cookie: refreshToken=<token>; HttpOnly; Secure; SameSite=None; Max-Age=604800
 ```
 
-**Important for Next.js:**
-- Use `withCredentials: true` in Axios
-- Dev: ensure `SameSite=None; Secure` works (requires HTTPS in production)
-- If testing locally without HTTPS, ask backend to set `secure: false` in dev
+---
+
+## 9. Course Creation Flow (State Machine)
+
+```
+IDLE
+  ↓
+SEARCHING (POST /courses/search)
+  ↓
+DUPLICATE_FOUND?
+  ├── YES → enrollExisting() → POST /courses/:id/enroll → SUCCESS
+  └── NO
+        ↓
+    CREATING (POST /courses/create)
+        ↓
+    GENERATING_BLUEPRINT (POST /courses/:id/blueprint)
+        ↓
+    REVIEWING_BLUEPRINT (user selects skills/challenges/badges)
+        ↓
+    CONFIRMING (POST /courses/blueprint/confirm)
+        ↓
+    SUCCESS
+```
+
+### Full sequence:
+1. User submits form `{ courseCode, title, description, xp, department, academicLevel }`
+2. `POST /courses/search?title=&courseCode=` — check for duplicates
+3. **If duplicates found:** show list → user picks one → `POST /courses/:id/enroll` → done
+4. **If no duplicates:** `POST /courses/create` → get `course.id`
+5. `POST /courses/:id/blueprint` — AI generates `{ skills[], challenges[], badges[] }`
+6. User reviews & selects desired items → `POST /courses/blueprint/confirm`
+7. Backend creates all + auto-enrolls → done
 
 ---
 
-## 7. Key Integration Notes
+## 10. Key Integration Notes
 
 1. **User Onboarding Flow:**
-   - Register → creates User + Account (with refreshToken)
-   - Create Profile → `POST /users/profile/create` (username, bio, etc.)
+   - Register → `POST /auth/register`
+   - Create Profile → `POST /users/profile/create` (requires auth)
    - Create Academic Info → `POST /academic-infos/create` (requires `profileId`)
-   - Enroll in Courses → `POST /courses/:courseId/enroll`
+   - Then can enroll in courses
 
 2. **AI Blueprint Flow:**
-   - `POST /courses/:courseId/blueprint` sends course details to Mistral AI
-   - Returns `{ skills[], challenges[], badges[] }` with criteria/rules
-   - Present these as selectable options to the user
-   - User selects desired ones → `POST /courses/blueprint/confirm`
-   - Backend creates all selected skills, challenges, badges, enrolls user
+   - `POST /courses/:courseId/blueprint` → sends to Mistral AI → returns gamification data
+   - User can deselect any generated items
+   - `POST /courses/blueprint/confirm` → backend creates skills/challenges/badges + enrolls user
+   - Returns `200` on success; blueprint status becomes `ACCEPTED` or `PARTIALLY_ACCEPTED`
 
 3. **Error Handling:**
-   - All errors: `{ success: false, message: string, errors?: string[] }`
-   - Validation error `400`: Zod error details in `errors` array
-   - Auth error `401`: Token missing/expired
-   - Not found `404`: Resource not found
-   - Conflict `409`: Duplicate email/username
+   - All errors: `{ success: false, message, errors?: string[] }`
+   - `400`: Zod validation errors
+   - `401`: Missing/expired token
+   - `404`: Resource not found (course, profile, academic info)
+   - `409`: Duplicate email/username
+   - `500`: Server errors (incl. AI generation failure)
 
-4. **CORS:** Backend expects requests from `http://localhost:3000` (dev). Configure your frontend URL accordingly.
+4. **CORS:** Backend expects `http://localhost:3000` (dev). Configure via `FRONTEND_URL` env.
 
-5. **CSRF:** Not implemented. Since refresh token is httpOnly, CSRF risk is limited. If needed, add CSRF tokens later.
+5. **HTTP-only cookies** are used for refresh tokens — `withCredentials: true` must be set.
