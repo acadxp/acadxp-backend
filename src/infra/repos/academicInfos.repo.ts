@@ -1,5 +1,5 @@
 import prisma from "../../lib/db";
-import type { AcademicInfo } from "@prisma/client";
+import type { AcademicInfo } from "../../generated/prisma/client";
 import { profileRepo } from "./profile.repo";
 import { HttpError } from "../../error/httpError";
 

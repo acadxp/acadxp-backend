@@ -1,5 +1,5 @@
 import { profileRepo } from "../infra/repos/profile.repo";
-import type { Profile } from "@prisma/client";
+import type { Profile } from "../generated/prisma/client";
 import type { IProfile } from "../types/profile.types";
 
 // get user profile by userId

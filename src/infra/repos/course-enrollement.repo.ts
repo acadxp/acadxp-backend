@@ -1,10 +1,10 @@
 import prisma from "../../lib/db";
-import type { CourseEnrollment } from "@prisma/client";
+import type { StudentCourseEnrollment } from "../../generated/prisma/client";
 
 const createCourseEnrollemnt = async (
   courseId: string,
   acadId: string,
-): Promise<CourseEnrollment> => {
+): Promise<StudentCourseEnrollment> => {
   const courseEnrollment = await prisma.studentCourseEnrollment.create({
     data: {
       courseId,
@@ -17,7 +17,7 @@ const createCourseEnrollemnt = async (
 
 const getCourseEnrollmentByAcadId = async (
   acadId: string,
-): Promise<CourseEnrollment[]> => {
+): Promise<StudentCourseEnrollment[]> => {
   const courseEnrollments = await prisma.studentCourseEnrollment.findMany({
     where: {
       academicInfoId: acadId,
@@ -33,7 +33,7 @@ const getCourseEnrollmentByAcadId = async (
 const findExistingEnrollment = async (
   courseId: string,
   acadId: string,
-): Promise<CourseEnrollment | null> => {
+): Promise<StudentCourseEnrollment | null> => {
   const existingEnrollment = await prisma.studentCourseEnrollment.findUnique({
     where: {
       academicInfoId_courseId: {

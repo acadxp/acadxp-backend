@@ -1,4 +1,4 @@
-import type { AcademicInfo } from "@prisma/client";
+import type { AcademicInfo } from "../generated/prisma/client";
 import { academicInfosRepos } from "../infra/repos/academicInfos.repo";
 import { HttpError } from "../error/httpError";
 

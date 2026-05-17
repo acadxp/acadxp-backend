@@ -1,4 +1,4 @@
-import type { User } from "@prisma/client";
+import type { User } from "../generated/prisma/client";
 import { userRepos } from "../infra/repos/user.repo";
 import type { ICreateUser } from "../validation/user.schema";
 import { generateAccessToken, generateRefreshToken } from "../lib/jwt";

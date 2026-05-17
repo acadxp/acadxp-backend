@@ -1,5 +1,5 @@
 import prisma from "../../lib/db";
-import type { Profile } from "@prisma/client";
+import type { Profile } from "../../generated/prisma/client";
 
 // find profile by userId
 const findProfileByUserId = async (userId: string): Promise<Profile | null> => {
