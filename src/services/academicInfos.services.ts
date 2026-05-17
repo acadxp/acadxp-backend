@@ -1,5 +1,6 @@
 import type { AcademicInfo } from "@prisma/client";
 import { academicInfosRepos } from "../infra/repos/academicInfos.repo";
+import { HttpError } from "../error/httpError";
 
 const createAcademicInfo = async (data: Partial<AcademicInfo>) => {
   // Transform YYYY-MM-DD dates to ISO-8601 DateTime format
@@ -24,7 +25,7 @@ const getAcademicInfoByUserId = async (userId: string) => {
   const acadInfo = await academicInfosRepos.getAcademicInfoByUserId(userId);
 
   if (!acadInfo) {
-    throw new Error("Academic information not found for the user");
+    throw new HttpError(404, "Academic information not found. Please set up your academic info first.");
   }
 
   return acadInfo;

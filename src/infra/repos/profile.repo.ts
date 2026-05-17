@@ -2,7 +2,7 @@ import prisma from "../../lib/db";
 import type { Profile } from "@prisma/client";
 
 // find profile by userId
-const findProfileByUserId = async (userId: string): Promise<Profile> => {
+const findProfileByUserId = async (userId: string): Promise<Profile | null> => {
   return await prisma.profile.findUnique({
     where: {
       userId: userId,

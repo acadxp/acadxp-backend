@@ -21,12 +21,32 @@ import { authMiddleware } from "../../middlewares/auth.middleware";
 
 const CourseRoutes = express.Router();
 
+// Literal POST routes (before parameterized routes to avoid capture)
 CourseRoutes.post("/create", asyncHandler(createCourseHandler));
 CourseRoutes.post(
   "/search",
   asyncHandler(validateSearchCourses),
   asyncHandler(searchCoursesHandler),
 );
+CourseRoutes.post(
+  "/blueprint/confirm",
+  asyncHandler(authMiddleware),
+  asyncHandler(acceptCourseBlueprint),
+);
+
+// Parameterized POST routes
+CourseRoutes.post(
+  "/:courseId/enroll",
+  asyncHandler(authMiddleware),
+  asyncHandler(createCourseEnrollment),
+);
+CourseRoutes.post(
+  "/:courseId/blueprint",
+  asyncHandler(authMiddleware),
+  asyncHandler(generateCourseBlueprint),
+);
+
+// GET routes (literal before parameterized)
 CourseRoutes.get("/all", asyncHandler(getAllCoursesHandler));
 CourseRoutes.get(
   "/enrollments",
@@ -34,26 +54,13 @@ CourseRoutes.get(
   asyncHandler(getCourseEnrollmentByAcadId),
 );
 CourseRoutes.get("/:courseId", asyncHandler(getCourseByIdHandler));
+
+// DELETE routes
 CourseRoutes.delete("/:courseId", asyncHandler(deleteCourseHandler));
-CourseRoutes.post(
-  "/:courseId/enroll",
-  asyncHandler(authMiddleware),
-  asyncHandler(createCourseEnrollment),
-);
 CourseRoutes.delete(
   "/:courseId/enroll",
   asyncHandler(authMiddleware),
   asyncHandler(unEnrollFromCourse),
-);
-CourseRoutes.post(
-  "/blueprint/confirm",
-  asyncHandler(authMiddleware),
-  asyncHandler(acceptCourseBlueprint),
-);
-CourseRoutes.post(
-  "/:courseId/blueprint",
-  asyncHandler(authMiddleware),
-  asyncHandler(generateCourseBlueprint),
 );
 
 export default CourseRoutes;
