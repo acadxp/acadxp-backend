@@ -27,12 +27,15 @@ export const createUser = async (req: Request, res: Response) => {
   const { userWithoutPwd, accessToken, refreshToken } =
     await AuthService.registerUser(data);
 
-  res.cookie("refreshToken", refreshToken, {
+  const isProduction = process.env.NODE_ENV === "production";
+  const cookieOptions = {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
+    secure: isProduction,
+    sameSite: isProduction ? "none" as const : "lax" as const,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  res.cookie("refreshToken", refreshToken, cookieOptions);
 
   sendSuccessResponse(res, 201, "User registered successfully", {
     user: userWithoutPwd,
@@ -46,11 +49,12 @@ export const loginUser = async (req: Request, res: Response) => {
   const { userWithoutPwd, accessToken, refreshToken } =
     await AuthService.loginUser(email, password);
 
+  const isProduction = process.env.NODE_ENV === "production";
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   sendSuccessResponse(res, 200, "User logged in successfully", {
@@ -67,10 +71,11 @@ export const logoutUser = async (req: Request, res: Response) => {
 
   await AuthService.deleteRefreshToken(refreshTokenFromCookie);
 
+  const isProduction = process.env.NODE_ENV === "production";
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
 
   sendSuccessResponse(res, 200, "User logged out successfully");
@@ -112,11 +117,12 @@ export const refreshToken = async (req: Request, res: Response) => {
   const { userWithoutPwd, accessToken, refreshToken } =
     await AuthService.refreshAccessToken(refreshTokenFromCookie);
 
+  const isProduction = process.env.NODE_ENV === "production";
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   return sendSuccessResponse(res, 200, "Access token refreshed", {
