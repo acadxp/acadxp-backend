@@ -11,7 +11,6 @@ import {
 
 export const getUserProfile = async (req: Request, res: Response) => {
   const user = req.user;
-
   const userProfile = await profileService.getUserProfile(user?.id as string);
 
   if (!userProfile) {
@@ -54,11 +53,34 @@ export const createUserProfile = async (req: Request, res: Response) => {
   });
 };
 
+export const updateUserProfile = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { name, username, bio, location, socials, preferences } = req.body;
+
+  if (username) {
+    const exists = await profileService.isUsernameAlreadyUsed(username);
+    if (exists) {
+      return sendErrorResponse(res, 409, "Username already exists");
+    }
+  }
+
+  const updated = await profileService.updateUserProfile(user!.id, {
+    name,
+    username,
+    bio,
+    location,
+    socials,
+    preferences,
+  });
+
+  return sendSuccessResponse(res, 200, "Profile updated successfully", {
+    profile: updated,
+  });
+};
+
 export const checkUsername = async (req: Request, res: Response) => {
   const username = req.query.username as string;
-
   const data = createUsernameSchema.parse({ username });
-
   const usernameExists = await profileService.isUsernameAlreadyUsed(data.username);
 
   if (usernameExists) {

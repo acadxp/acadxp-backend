@@ -25,6 +25,7 @@ const acadInfoIncludes = {
   goals: {
     orderBy: { createdAt: "desc" } as const,
   },
+  notificationPreferences: true,
 } satisfies Prisma.AcademicInfoInclude;
 
 const createAcademicInfo = async (data: Prisma.AcademicInfoUncheckedCreateInput) => {
@@ -58,8 +59,20 @@ const getAcademicInfoByUserId = async (userId: string) => {
   return acadInfo;
 };
 
+const updateAcademicInfo = async (
+  profileId: string,
+  data: Prisma.AcademicInfoUpdateInput,
+) => {
+  return await prisma.academicInfo.update({
+    where: { profileId },
+    data,
+    include: acadInfoIncludes,
+  });
+};
+
 export const academicInfosRepos = {
   createAcademicInfo,
   getAcademicInfoByProfileId,
   getAcademicInfoByUserId,
+  updateAcademicInfo,
 };

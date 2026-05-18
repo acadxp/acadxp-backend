@@ -2,6 +2,7 @@ import express from "express";
 import {
   getUserProfile,
   createUserProfile,
+  updateUserProfile,
   checkUsername,
 } from "../../controllers/v1/profile.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
@@ -20,6 +21,11 @@ ProfileRoutes.post(
   "/profile/create",
   asyncHandler(authMiddleware),
   asyncHandler(createUserProfile),
+);
+ProfileRoutes.patch(
+  "/profile",
+  asyncHandler(authMiddleware),
+  asyncHandler(updateUserProfile),
 );
 
 export default ProfileRoutes;

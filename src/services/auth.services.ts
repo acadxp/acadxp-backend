@@ -4,6 +4,7 @@ import type { ICreateUser } from "../validation/user.schema";
 import { generateAccessToken, generateRefreshToken } from "../lib/jwt";
 import { sanitizeUser, type UserWithoutPassword } from "../utils/manageUser";
 import { verifyPassword } from "../lib/managePassword";
+import { HttpError } from "../error/httpError";
 
 // Register a new user
 const registerUser = async (
@@ -49,13 +50,13 @@ const loginUser = async (
 }> => {
   const user = await userRepos.getUserByEmail(email);
   if (!user) {
-    throw new Error("Invalid email or password");
+    throw new HttpError(401, "Invalid email or password");
   }
 
   const isPasswordValid = await verifyPassword(password, user.password);
 
   if (!isPasswordValid) {
-    throw new Error("Invalid email or password");
+    throw new HttpError(401, "Invalid email or password");
   }
 
   const accessToken = generateAccessToken({
@@ -96,13 +97,13 @@ const refreshAccessToken = async (refreshToken: string) => {
   const decoded = await userRepos.validateRefreshToken(refreshToken);
 
   if (!decoded) {
-    throw new Error("Invalid or expired refresh token");
+    throw new HttpError(401, "Session expired. Please log in again.");
   }
 
   const user = await userRepos.getUserById(decoded.userId);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new HttpError(401, "Session expired. Please log in again.");
   }
 
   const newAccessToken = generateAccessToken({
@@ -139,7 +140,7 @@ const refreshAccessToken = async (refreshToken: string) => {
 const getCurrentUser = async (userId: string) => {
   const user = await userRepos.getUserById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new HttpError(404, "User not found");
   }
 
   const userWithoutPwd = sanitizeUser(user);

@@ -4,6 +4,7 @@ import { hashPassword } from "../../lib/managePassword";
 import type { ICreateUser } from "../../validation/user.schema";
 import type { IStoreRefreshToken } from "../../types/profile.types";
 import { verifyToken } from "../../lib/jwt";
+import { HttpError } from "../../error/httpError";
 
 const createUser = async (data: ICreateUser) => {
   const hashedPwd = await hashPassword(data.password);
@@ -51,7 +52,7 @@ const validateRefreshToken = async (refreshToken: string) => {
   });
 
   if (!account) {
-    throw new Error("Refresh token not found or revoked");
+    throw new HttpError(401, "Session expired. Please log in again.");
   }
   return decoded;
 };

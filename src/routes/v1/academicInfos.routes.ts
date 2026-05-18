@@ -4,6 +4,7 @@ import asyncHandler from "../../utils/asyncHandler";
 import {
   createAcademicInfo,
   getAcademicInfo,
+  updateAcademicInfo,
 } from "../../controllers/v1/academicInfos.controller";
 
 const AcademicInfosRoutes = express.Router();
@@ -14,5 +15,10 @@ AcademicInfosRoutes.get(
   asyncHandler(getAcademicInfo)
 );
 AcademicInfosRoutes.post("/create", asyncHandler(createAcademicInfo));
+AcademicInfosRoutes.patch(
+  "/me",
+  asyncHandler(authMiddleware),
+  asyncHandler(updateAcademicInfo),
+);
 
 export default AcademicInfosRoutes;

@@ -26,6 +26,7 @@ const profileIncludes = {
       goals: {
         orderBy: { createdAt: "desc" } as const,
       },
+      notificationPreferences: true,
     },
   },
 } satisfies Prisma.ProfileInclude;
@@ -37,6 +38,14 @@ const findProfileByUserId = async (userId: string): Promise<Profile | null> => {
       userId: userId,
     },
     include: profileIncludes,
+  });
+};
+
+// update profile
+const updateProfile = async (userId: string, data: Partial<IProfile & { preferences: any }>) => {
+  return await prisma.profile.update({
+    where: { userId },
+    data,
   });
 };
 
@@ -60,4 +69,5 @@ export const profileRepo = {
   findProfileByUserId,
   findByUsername,
   createProfile,
+  updateProfile,
 };
