@@ -1,15 +1,15 @@
-import type { User } from "@prisma/client";
+import type { User } from "../generated/prisma/client";
 import { userRepos } from "../infra/repos/user.repo";
 import type { ICreateUser } from "../validation/user.schema";
 import { generateAccessToken, generateRefreshToken } from "../lib/jwt";
-import { sanitizeUser } from "../utils/manageUser";
+import { sanitizeUser, type UserWithoutPassword } from "../utils/manageUser";
 import { verifyPassword } from "../lib/managePassword";
 
 // Register a new user
 const registerUser = async (
   data: ICreateUser
 ): Promise<{
-  userWithoutPwd: any;
+  userWithoutPwd: UserWithoutPassword;
   accessToken: string;
   refreshToken: string;
 }> => {
@@ -39,7 +39,14 @@ const registerUser = async (
 };
 
 // Get user by ID
-const loginUser = async (email: string, password: string): Promise<User> => {
+const loginUser = async (
+  email: string,
+  password: string,
+): Promise<{
+  userWithoutPwd: UserWithoutPassword;
+  accessToken: string;
+  refreshToken: string;
+}> => {
   const user = await userRepos.getUserByEmail(email);
   if (!user) {
     throw new Error("Invalid email or password");

@@ -59,11 +59,11 @@ export const checkUsername = async (req: Request, res: Response) => {
 
   const data = createUsernameSchema.parse({ username });
 
-  const usernameExists = profileService.isUsernameAlreadyUsed(data.username);
+  const usernameExists = await profileService.isUsernameAlreadyUsed(data.username);
 
-  if (!usernameExists) {
-    sendErrorResponse(res, 409, "Username already exists");
+  if (usernameExists) {
+    return sendErrorResponse(res, 409, "Username already exists");
   }
 
-  sendSuccessResponse(res, 200, "Username is available");
+  return sendSuccessResponse(res, 200, "Username is available");
 };

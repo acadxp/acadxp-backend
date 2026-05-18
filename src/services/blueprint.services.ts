@@ -57,7 +57,6 @@ const generate = async (courseInfo: CourseInfo) => {
   const course = await CourseRepo.getById(courseInfo.courseId);
   if (!course) throw new HttpError(404, "Course not found");
 
-  // Check if a blueprint already exists for this course
   const existing = await BlueprintRepo.findByCourseId(courseInfo.courseId);
   if (
     existing &&
@@ -78,49 +77,89 @@ const generate = async (courseInfo: CourseInfo) => {
     generatedChallenges: blueprintData.challenges,
     generatedSkills: blueprintData.skills,
     generatedBadges: blueprintData.badges,
-    aiModel: blueprintData.meta.sourceModel,
+    aiModel: blueprintData.meta.sourceModel ?? "unknown",
   });
 
   return blueprintData;
 };
 
 /**
- * PATCH /courses/:id/blueprint
- * Confirms the user's selection. Runs as a single Prisma transaction:
- *   1. Creates Skill rows (upsert by name to avoid duplicates across courses)
- *   2. Creates CourseSkill join rows
- *   3. Creates Challenge rows
- *   4. Creates CourseChallenge join rows
- *   5. Optionally creates Badge rows
- *   6. Updates AICourseBluePrint status → ACCEPTED or PARTIALLY_ACCEPTED
- *
- * Returns a summary of what was stored.
+ * Confirms the user's selection AND enrolls them — all in one transaction.
+ *  1. Resolves user's academic info & creates enrollment if needed
+ *  2. Upserts Skills & CourseSkills
+ *  3. Creates Challenges & CourseChallenges
+ *  4. Creates Badges
+ *  5. Updates AICourseBluePrint status
  */
-const confirm = async (courseId: string, payload: BlueprintConfirmPayload) => {
-  const course = await CourseRepo.getById(courseId);
-  if (!course) throw new HttpError(404, "Course not found");
-
-  const blueprint = await BlueprintRepo.findByCourseId(courseId);
-  if (!blueprint) throw new HttpError(404, "Blueprint not found");
-  if (["ACCEPTED", "PARTIALLY_ACCEPTED"].includes(blueprint.status)) {
-    throw new HttpError(400, "Blueprint has already been confirmed");
-  }
-
+const confirm = async (
+  courseId: string,
+  payload: BlueprintConfirmPayload,
+  userId: string,
+) => {
   const { selectedSkills, selectedChallenges, selectedBadges = [] } = payload;
 
-  const totalGenerated =
-    (blueprint.generatedSkills as any[]).length +
-    (blueprint.generatedChallenges as any[]).length;
   const totalSelected = selectedSkills.length + selectedChallenges.length;
-  const newStatus =
-    totalSelected < totalGenerated ? "PARTIALLY_ACCEPTED" : "ACCEPTED";
 
-  // Single transaction — all or nothing
   const result = await prisma.$transaction(async (tx) => {
-    // ── Skills ──────────────────────────────────────────────────────────────
+    // ── Course + Blueprint checks (inside transaction to avoid races) ──────
+    const course = await tx.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new HttpError(404, "Course not found");
+
+    const blueprint = await tx.aICourseBluePrint.findUnique({
+      where: { courseId },
+    });
+    if (!blueprint) throw new HttpError(404, "Blueprint not found");
+    if (["ACCEPTED", "PARTIALLY_ACCEPTED"].includes(blueprint.status)) {
+      throw new HttpError(400, "Blueprint has already been confirmed");
+    }
+
+    const totalGenerated =
+      (blueprint.generatedSkills as any[]).length +
+      (blueprint.generatedChallenges as any[]).length;
+    const newStatus =
+      totalSelected < totalGenerated ? "PARTIALLY_ACCEPTED" : "ACCEPTED";
+
+    // ── Resolve academic info & check enrollment ─────────────────────────
+    const profile = await tx.profile.findUnique({ where: { userId } });
+    if (!profile) {
+      throw new HttpError(
+        404,
+        "Profile not found. Please create a profile first.",
+      );
+    }
+
+    const acadInfo = await tx.academicInfo.findFirst({
+      where: { profileId: profile.id },
+    });
+    if (!acadInfo) {
+      throw new HttpError(
+        404,
+        "Academic information not found. Please set up your academic info first.",
+      );
+    }
+
+    const existingEnrollment = await tx.studentCourseEnrollment.findUnique({
+      where: {
+        academicInfoId_courseId: {
+          academicInfoId: acadInfo.id,
+          courseId,
+        },
+      },
+    });
+
+    if (!existingEnrollment) {
+      await tx.studentCourseEnrollment.create({
+        data: { courseId, academicInfoId: acadInfo.id },
+      });
+    }
+
+    // ── Skills ────────────────────────────────────────────────────────────
     const createdSkills = await Promise.all(
-      selectedSkills.map((s: GeneratedSkill) =>
-        tx.skill.upsert({
+      selectedSkills.map((s: GeneratedSkill) => {
+        if (!s.criteria || typeof s.criteria !== "object") {
+          throw new HttpError(400, `Skill "${s.title}" has invalid criteria`);
+        }
+        return tx.skill.upsert({
           where: { name: s.title },
           update: {},
           create: {
@@ -128,8 +167,8 @@ const confirm = async (courseId: string, payload: BlueprintConfirmPayload) => {
             description: s.description,
             xpValue: s.xpValue,
           },
-        }),
-      ),
+        });
+      }),
     );
 
     await Promise.all(
@@ -146,10 +185,16 @@ const confirm = async (courseId: string, payload: BlueprintConfirmPayload) => {
       ),
     );
 
-    // ── Challenges ──────────────────────────────────────────────────────────
+    // ── Challenges ────────────────────────────────────────────────────────
     const createdChallenges = await Promise.all(
-      selectedChallenges.map((c: GeneratedChallenge) =>
-        tx.challenge.create({
+      selectedChallenges.map((c: GeneratedChallenge) => {
+        if (!c.criteria || typeof c.criteria !== "object") {
+          throw new HttpError(
+            400,
+            `Challenge "${c.title}" has invalid criteria`,
+          );
+        }
+        return tx.challenge.create({
           data: {
             title: c.title,
             description: c.description,
@@ -158,8 +203,8 @@ const confirm = async (courseId: string, payload: BlueprintConfirmPayload) => {
             xpReward: c.xpReward,
             criteria: c.criteria as any,
           },
-        }),
-      ),
+        });
+      }),
     );
 
     await Promise.all(
@@ -174,27 +219,33 @@ const confirm = async (courseId: string, payload: BlueprintConfirmPayload) => {
       ),
     );
 
-    // ── Badges (optional) ───────────────────────────────────────────────────
+    // ── Badges (optional) ─────────────────────────────────────────────────
     const createdBadges = await Promise.all(
-      selectedBadges.map((b: GeneratedBadge) =>
-        tx.badge.create({
+      selectedBadges.map((b: GeneratedBadge) => {
+        if (!b.criteria || typeof b.criteria !== "object") {
+          throw new HttpError(400, `Badge "${b.title}" has invalid criteria`);
+        }
+        return tx.badge.create({
           data: {
             title: b.title,
             description: b.description,
             xpReward: b.xpValue,
             criteria: b.criteria as any,
           },
-        }),
-      ),
+        });
+      }),
     );
 
-    // ── Blueprint status ─────────────────────────────────────────────────────
+    // ── Blueprint status ─────────────────────────────────────────────────
     await tx.aICourseBluePrint.update({
       where: { id: blueprint.id },
-      data: {
-        status: newStatus,
-        acceptedAt: new Date(),
-      },
+      data: { status: newStatus, acceptedAt: new Date() },
+    });
+
+    // ── Publish course ──────────────────────────────────────────────────
+    await tx.course.update({
+      where: { id: courseId },
+      data: { status: "ACTIVE" },
     });
 
     return {

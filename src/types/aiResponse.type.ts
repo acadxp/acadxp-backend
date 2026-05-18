@@ -41,7 +41,7 @@ export interface Challenge {
 export interface Badge {
   title: string;
   description: string;
-  xpReward: number;
+  xpValue: number;
   iconPrompt: string | null;
   criteria: Criteria;
 }

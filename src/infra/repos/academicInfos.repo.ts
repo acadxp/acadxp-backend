@@ -1,8 +1,9 @@
 import prisma from "../../lib/db";
-import type { AcademicInfo } from "@prisma/client";
+import type { Prisma } from "../../generated/prisma/client";
 import { profileRepo } from "./profile.repo";
+import { HttpError } from "../../error/httpError";
 
-const createAcademicInfo = async (data: Partial<AcademicInfo>) => {
+const createAcademicInfo = async (data: Prisma.AcademicInfoUncheckedCreateInput) => {
   return await prisma.academicInfo.create({
     data,
   });
@@ -19,7 +20,7 @@ const getAcademicInfoByUserId = async (userId: string) => {
   const profile = await profileRepo.findProfileByUserId(userId);
 
   if (!profile) {
-    throw new Error("Profile not found for the user");
+    throw new HttpError(404, "Profile not found. Please create a profile first.");
   }
 
   const acadInfo = await prisma.academicInfo.findFirst({

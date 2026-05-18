@@ -1,7 +1,7 @@
 import prisma from "../../lib/db";
-import type { Course } from "@prisma/client";
+import type { CreateCourseInput } from "../../validation/course.schema";
 
-const createCourse = async (data: Course) => {
+const createCourse = async (data: CreateCourseInput) => {
   const course = await prisma.course.create({
     data,
   });
@@ -9,7 +9,9 @@ const createCourse = async (data: Course) => {
 };
 
 const findAllCourses = async () => {
-  const courses = await prisma.course.findMany();
+  const courses = await prisma.course.findMany({
+    orderBy: { createdAt: "desc" },
+  });
   return courses;
 };
 

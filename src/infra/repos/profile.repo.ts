@@ -1,8 +1,9 @@
 import prisma from "../../lib/db";
-import type { Profile } from "@prisma/client";
+import type { Profile } from "../../generated/prisma/client";
+import type { IProfile } from "../../types/profile.types";
 
 // find profile by userId
-const findProfileByUserId = async (userId: string): Promise<Profile> => {
+const findProfileByUserId = async (userId: string): Promise<Profile | null> => {
   return await prisma.profile.findUnique({
     where: {
       userId: userId,
@@ -19,7 +20,7 @@ const findByUsername = async (username: string): Promise<Profile | null> => {
 
 // create new profile
 const createProfile = async (
-  profileData: Partial<Profile>
+  profileData: IProfile
 ): Promise<Profile> => {
   return await prisma.profile.create({
     data: profileData,
