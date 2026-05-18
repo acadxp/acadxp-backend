@@ -14,4 +14,6 @@ export const validateSearchCourses = (
       "At least one of 'title' or 'courseCode' must be provided",
     );
   }
+
+  next();
 };

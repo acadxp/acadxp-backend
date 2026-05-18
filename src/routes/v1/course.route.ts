@@ -23,7 +23,7 @@ const CourseRoutes = express.Router();
 
 // Literal POST routes (before parameterized routes to avoid capture)
 CourseRoutes.post("/create", asyncHandler(createCourseHandler));
-CourseRoutes.post(
+CourseRoutes.get(
   "/search",
   asyncHandler(validateSearchCourses),
   asyncHandler(searchCoursesHandler),

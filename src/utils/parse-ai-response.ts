@@ -262,7 +262,7 @@ export function parseAIResponse(input: unknown): ParseResult {
         raw as RawConversationResponse,
       );
       gamificationRaw = extracted.gamificationRaw;
-      sourceModel = extracted.sourceModel;
+      sourceModel = extracted.sourceModel || "unknown";
       conversationId = extracted.conversationId;
       usage = extracted.usage;
     } catch (err) {

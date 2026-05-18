@@ -4,8 +4,6 @@ import {
   sendSuccessResponse,
   sendErrorResponse,
 } from "../../utils/http-response";
-import { CourseEnrollmentService } from "../../services/course-enrollemnt.services";
-import type { BlueprintConfirmPayload } from "../../types/course.types";
 import { confirmBlueprintSchema } from "../../validation/course.schema";
 
 type CourseInfo = {
@@ -44,30 +42,13 @@ export const generateCourseBlueprint = async (req: Request, res: Response) => {
 };
 
 export const acceptCourseBlueprint = async (req: Request, res: Response) => {
-  const { courseId, confirmPayload } = req.body as {
-    courseId: string;
-    confirmPayload: BlueprintConfirmPayload;
-  };
+  const { courseId, confirmPayload } = req.body;
 
-  const confirmationResult = await BlueprintService.confirm(
-    courseId,
-    confirmPayload,
-  );
+  // Validate incoming data before touching the DB
+  confirmBlueprintSchema.parse({ confirmPayload });
 
-  if (!confirmationResult) {
-    throw new Error("Failed to confirm blueprint");
-  }
-
-  const courseEnrollment = await CourseEnrollmentService.createCourseEnrollemnt(
-    courseId,
-    req.user!.id,
-  );
-
-  if (!courseEnrollment) {
-    throw new Error(
-      "Failed to enroll user to the course after blueprint confirmation",
-    );
-  }
+  // Everything runs in one transaction — blueprint + enrollment
+  await BlueprintService.confirm(courseId, confirmPayload, req.user!.id);
 
   return sendSuccessResponse(
     res,
