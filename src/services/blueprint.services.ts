@@ -242,6 +242,12 @@ const confirm = async (
       data: { status: newStatus, acceptedAt: new Date() },
     });
 
+    // ── Publish course ──────────────────────────────────────────────────
+    await tx.course.update({
+      where: { id: courseId },
+      data: { status: "ACTIVE" },
+    });
+
     return {
       skills: createdSkills,
       challenges: createdChallenges,
