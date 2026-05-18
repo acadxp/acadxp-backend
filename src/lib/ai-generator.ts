@@ -125,7 +125,7 @@ const schemaDefinition = {
         properties: {
           title: { type: "string" },
           description: { type: "string" },
-          xpReward: { type: "number" },
+          xpValue: { type: "number" },
           iconPrompt: { type: "string" },
           criteria: {
             type: "object",
