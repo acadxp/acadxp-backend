@@ -3,12 +3,18 @@ import { userRepos } from "../infra/repos/user.repo";
 import type { ICreateUser } from "../validation/user.schema";
 import { generateAccessToken, generateRefreshToken } from "../lib/jwt";
 import { sanitizeUser, type UserWithoutPassword } from "../utils/manageUser";
-import { verifyPassword } from "../lib/managePassword";
+import { verifyPassword, hashPassword } from "../lib/managePassword";
 import { HttpError } from "../error/httpError";
 
-// Register a new user
+type DeviceInfo = {
+  deviceName?: string;
+  deviceType?: string;
+  ipAddress?: string;
+};
+
 const registerUser = async (
-  data: ICreateUser
+  data: ICreateUser,
+  device?: DeviceInfo,
 ): Promise<{
   userWithoutPwd: UserWithoutPassword;
   accessToken: string;
@@ -30,19 +36,19 @@ const registerUser = async (
     role: newUser.role,
   });
 
-  // store refresh token in DB
   await userRepos.storeRefreshToken({
     userId: newUser.id,
     refreshToken,
+    ...device,
   });
 
   return { userWithoutPwd, accessToken, refreshToken };
 };
 
-// Get user by ID
 const loginUser = async (
   email: string,
   password: string,
+  device?: DeviceInfo,
 ): Promise<{
   userWithoutPwd: UserWithoutPassword;
   accessToken: string;
@@ -71,13 +77,12 @@ const loginUser = async (
     role: user.role,
   });
 
-  // revoke existing refresh tokens
   await userRepos.revokeRefreshToken(user.id);
 
-  // store new refresh token in DB
   await userRepos.storeRefreshToken({
     userId: user.id,
     refreshToken,
+    ...device,
   });
 
   const userWithoutPwd = sanitizeUser(user);
@@ -85,15 +90,12 @@ const loginUser = async (
   return { userWithoutPwd, accessToken, refreshToken };
 };
 
-// check if email is already used
 const isEmailAlreadyUsed = async (email: string): Promise<boolean> => {
   const emailExists = await userRepos.getUserByEmail(email);
   return !!emailExists;
 };
 
-// Refresh access token using refresh token
-const refreshAccessToken = async (refreshToken: string) => {
-  // verify refresh token
+const refreshAccessToken = async (refreshToken: string, device?: DeviceInfo) => {
   const decoded = await userRepos.validateRefreshToken(refreshToken);
 
   if (!decoded) {
@@ -118,13 +120,12 @@ const refreshAccessToken = async (refreshToken: string) => {
     role: user.role,
   });
 
-  // revoke existing refresh tokens
   await userRepos.revokeRefreshToken(user.id);
 
-  // store new refresh token in DB
   await userRepos.storeRefreshToken({
     userId: user.id,
     refreshToken: newRefreshToken,
+    ...device,
   });
 
   const userWithoutPwd = sanitizeUser(user);
@@ -136,7 +137,6 @@ const refreshAccessToken = async (refreshToken: string) => {
   };
 };
 
-// Get current user (session check)
 const getCurrentUser = async (userId: string) => {
   const user = await userRepos.getUserById(userId);
   if (!user) {
@@ -153,9 +153,35 @@ const getCurrentUser = async (userId: string) => {
   return { userWithoutPwd, accessToken: newAccessToken };
 };
 
-// Delete refresh token (logout)
 const deleteRefreshToken = async (refreshToken: string) => {
   await userRepos.deleteRefreshToken(refreshToken);
+};
+
+const changePassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) => {
+  const user = await userRepos.getUserById(userId);
+  if (!user) {
+    throw new HttpError(404, "User not found");
+  }
+
+  const isValid = await verifyPassword(currentPassword, user.password);
+  if (!isValid) {
+    throw new HttpError(400, "Current password is incorrect");
+  }
+
+  const hashed = await hashPassword(newPassword);
+  await userRepos.updatePassword(userId, hashed);
+};
+
+const getActiveSessions = async (userId: string) => {
+  return await userRepos.getActiveSessions(userId);
+};
+
+const revokeAllSessionsExcept = async (userId: string, currentToken: string) => {
+  await userRepos.revokeAllSessionsExcept(userId, currentToken);
 };
 
 export const AuthService = {
@@ -165,4 +191,7 @@ export const AuthService = {
   refreshAccessToken,
   getCurrentUser,
   deleteRefreshToken,
+  changePassword,
+  getActiveSessions,
+  revokeAllSessionsExcept,
 };

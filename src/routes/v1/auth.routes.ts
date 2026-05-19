@@ -6,6 +6,9 @@ import {
   checkEmail,
   refreshToken,
   logoutUser,
+  changePassword,
+  getSessions,
+  revokeAllSessions,
 } from "../../controllers/v1/auth.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 import asyncHandler from "../../utils/asyncHandler";
@@ -17,6 +20,8 @@ AuthRoutes.post("/login", asyncHandler(loginUser));
 AuthRoutes.get("/check-email", asyncHandler(checkEmail));
 AuthRoutes.post("/refresh-token", asyncHandler(refreshToken));
 AuthRoutes.post("/logout", asyncHandler(logoutUser));
-// AuthRoutes.get("/me", asyncHandler(authMiddleware), asyncHandler(getCurrentUser));
+AuthRoutes.post("/change-password", asyncHandler(authMiddleware), asyncHandler(changePassword));
+AuthRoutes.get("/sessions", asyncHandler(authMiddleware), asyncHandler(getSessions));
+AuthRoutes.post("/sessions/revoke-all", asyncHandler(authMiddleware), asyncHandler(revokeAllSessions));
 
 export default AuthRoutes;
