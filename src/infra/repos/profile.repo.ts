@@ -32,7 +32,9 @@ const profileIncludes = {
 } satisfies Prisma.ProfileInclude;
 
 // find profile by userId
-const findProfileByUserId = async (userId: string): Promise<Profile | null> => {
+type ProfileWithAcademicInfo = Prisma.ProfileGetPayload<{ include: typeof profileIncludes }>;
+
+const findProfileByUserId = async (userId: string): Promise<ProfileWithAcademicInfo | null> => {
   return await prisma.profile.findUnique({
     where: {
       userId: userId,
