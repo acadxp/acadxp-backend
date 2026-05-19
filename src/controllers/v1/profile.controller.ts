@@ -102,3 +102,15 @@ export const checkUsername = async (req: Request, res: Response) => {
 
   return sendSuccessResponse(res, 200, "Username is available");
 };
+
+export const resetProgress = async (req: Request, res: Response) => {
+  const user = req.user!;
+  await profileService.resetProgress(user.id);
+  sendSuccessResponse(res, 200, "Progress reset successfully");
+};
+
+export const deleteAccount = async (req: Request, res: Response) => {
+  const user = req.user!;
+  await profileService.deleteAccount(user.id);
+  sendSuccessResponse(res, 200, "Account deleted successfully");
+};

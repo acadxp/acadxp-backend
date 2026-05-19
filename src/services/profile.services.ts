@@ -56,4 +56,43 @@ export const profileService = {
   createUserProfile,
   updateUserProfile,
   updateUserName,
+  resetProgress,
+  deleteAccount,
 };
+
+async function resetProgress(userId: string) {
+  const profile = await profileRepo.findProfileByUserId(userId);
+  if (!profile?.academicInfo) return;
+
+  const infoId = profile.academicInfo.id;
+
+  await prisma.$transaction([
+    prisma.studentBadge.deleteMany({ where: { academicInfoId: infoId } }),
+    prisma.studentChallenge.deleteMany({ where: { academicInfoId: infoId } }),
+    prisma.xPEvent.deleteMany({ where: { academicInfoId: infoId } }),
+    prisma.goal.deleteMany({ where: { academicInfoId: infoId } }),
+    prisma.notification.deleteMany({ where: { academicInfoId: infoId } }),
+    prisma.studentSkill.updateMany({
+      where: { academicInfoId: infoId },
+      data: { xpEarned: 0, proficiencyLevel: "BEGINNER" },
+    }),
+    prisma.studentCourseEnrollment.updateMany({
+      where: { academicInfoId: infoId },
+      data: { xpEarned: 0, completedStatus: false, completedAt: null },
+    }),
+    prisma.academicInfo.update({
+      where: { id: infoId },
+      data: { xp: 0, level: 1 },
+    }),
+  ]);
+}
+
+async function deleteAccount(userId: string) {
+  const profile = await profileRepo.findProfileByUserId(userId);
+  if (profile?.academicInfo) {
+    await prisma.studentCourseEnrollment.deleteMany({
+      where: { academicInfoId: profile.academicInfo.id },
+    });
+  }
+  await prisma.user.delete({ where: { id: userId } });
+}
