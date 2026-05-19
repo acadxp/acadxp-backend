@@ -2,6 +2,10 @@ import express from "express";
 import {
   getUserProfile,
   createUserProfile,
+  updateUserProfile,
+  updateUserName,
+  resetProgress,
+  deleteAccount,
   checkUsername,
 } from "../../controllers/v1/profile.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
@@ -20,6 +24,26 @@ ProfileRoutes.post(
   "/profile/create",
   asyncHandler(authMiddleware),
   asyncHandler(createUserProfile),
+);
+ProfileRoutes.patch(
+  "/profile",
+  asyncHandler(authMiddleware),
+  asyncHandler(updateUserProfile),
+);
+ProfileRoutes.patch(
+  "/name",
+  asyncHandler(authMiddleware),
+  asyncHandler(updateUserName),
+);
+ProfileRoutes.post(
+  "/reset-progress",
+  asyncHandler(authMiddleware),
+  asyncHandler(resetProgress),
+);
+ProfileRoutes.delete(
+  "/account",
+  asyncHandler(authMiddleware),
+  asyncHandler(deleteAccount),
 );
 
 export default ProfileRoutes;

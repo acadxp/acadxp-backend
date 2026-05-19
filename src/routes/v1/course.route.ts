@@ -6,6 +6,8 @@ import {
   getAllCoursesHandler,
   getCourseByIdHandler,
   deleteCourseHandler,
+  getChallengeByIdHandler,
+  getCourseChallengesHandler,
 } from "../../controllers/v1/course.controller";
 import {
   createCourseEnrollment,
@@ -54,6 +56,16 @@ CourseRoutes.get(
   asyncHandler(getCourseEnrollmentByAcadId),
 );
 CourseRoutes.get("/:courseId", asyncHandler(getCourseByIdHandler));
+CourseRoutes.get(
+  "/:courseId/challenges",
+  asyncHandler(authMiddleware),
+  asyncHandler(getCourseChallengesHandler),
+);
+CourseRoutes.get(
+  "/:courseId/challenges/:challengeId",
+  asyncHandler(authMiddleware),
+  asyncHandler(getChallengeByIdHandler),
+);
 
 // DELETE routes
 CourseRoutes.delete("/:courseId", asyncHandler(deleteCourseHandler));

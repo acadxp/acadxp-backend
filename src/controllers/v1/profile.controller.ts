@@ -11,7 +11,6 @@ import {
 
 export const getUserProfile = async (req: Request, res: Response) => {
   const user = req.user;
-
   const userProfile = await profileService.getUserProfile(user?.id as string);
 
   if (!userProfile) {
@@ -54,11 +53,47 @@ export const createUserProfile = async (req: Request, res: Response) => {
   });
 };
 
+export const updateUserProfile = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { name, username, bio, location, socials, preferences } = req.body;
+
+  if (username) {
+    const existing = await profileService.isUsernameAlreadyUsed(username);
+    if (existing && existing.userId !== user!.id) {
+      return sendErrorResponse(res, 409, "Username already exists");
+    }
+  }
+
+  const updated = await profileService.updateUserProfile(user!.id, {
+    name,
+    username,
+    bio,
+    location,
+    socials,
+    preferences,
+  });
+
+  return sendSuccessResponse(res, 200, "Profile updated successfully", {
+    profile: updated,
+  });
+};
+
+export const updateUserName = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { name } = req.body;
+
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return sendErrorResponse(res, 400, "Name is required");
+  }
+
+  await profileService.updateUserName(user!.id, name.trim());
+
+  return sendSuccessResponse(res, 200, "Name updated successfully");
+};
+
 export const checkUsername = async (req: Request, res: Response) => {
   const username = req.query.username as string;
-
   const data = createUsernameSchema.parse({ username });
-
   const usernameExists = await profileService.isUsernameAlreadyUsed(data.username);
 
   if (usernameExists) {
@@ -66,4 +101,16 @@ export const checkUsername = async (req: Request, res: Response) => {
   }
 
   return sendSuccessResponse(res, 200, "Username is available");
+};
+
+export const resetProgress = async (req: Request, res: Response) => {
+  const user = req.user!;
+  await profileService.resetProgress(user.id);
+  sendSuccessResponse(res, 200, "Progress reset successfully");
+};
+
+export const deleteAccount = async (req: Request, res: Response) => {
+  const user = req.user!;
+  await profileService.deleteAccount(user.id);
+  sendSuccessResponse(res, 200, "Account deleted successfully");
 };

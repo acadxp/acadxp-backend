@@ -4,6 +4,7 @@ import { hashPassword } from "../../lib/managePassword";
 import type { ICreateUser } from "../../validation/user.schema";
 import type { IStoreRefreshToken } from "../../types/profile.types";
 import { verifyToken } from "../../lib/jwt";
+import { HttpError } from "../../error/httpError";
 
 const createUser = async (data: ICreateUser) => {
   const hashedPwd = await hashPassword(data.password);
@@ -30,7 +31,11 @@ const storeRefreshToken = async (data: IStoreRefreshToken) => {
       id: uuidv4(),
       userId: data.userId,
       refreshToken: data.refreshToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      deviceName: data.deviceName,
+      deviceType: data.deviceType,
+      ipAddress: data.ipAddress,
+      lastActiveAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
   });
 };
@@ -51,7 +56,7 @@ const validateRefreshToken = async (refreshToken: string) => {
   });
 
   if (!account) {
-    throw new Error("Refresh token not found or revoked");
+    throw new HttpError(401, "Session expired. Please log in again.");
   }
   return decoded;
 };
@@ -69,6 +74,34 @@ const deleteRefreshToken = async (refreshToken: string) => {
   });
 };
 
+const updatePassword = async (userId: string, hashedPassword: string) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+};
+
+const getActiveSessions = async (userId: string) => {
+  return await prisma.account.findMany({
+    where: { userId, isRevoked: false },
+    orderBy: { lastActiveAt: "desc" },
+  });
+};
+
+const revokeAllSessionsExcept = async (userId: string, currentToken: string) => {
+  return await prisma.account.updateMany({
+    where: { userId, refreshToken: { not: currentToken }, isRevoked: false },
+    data: { isRevoked: true },
+  });
+};
+
+const updateAccountLastActive = async (refreshToken: string) => {
+  return await prisma.account.updateMany({
+    where: { refreshToken },
+    data: { lastActiveAt: new Date() },
+  });
+};
+
 export const userRepos = {
   createUser,
   storeRefreshToken,
@@ -77,4 +110,8 @@ export const userRepos = {
   validateRefreshToken,
   revokeRefreshToken,
   deleteRefreshToken,
+  updatePassword,
+  getActiveSessions,
+  revokeAllSessionsExcept,
+  updateAccountLastActive,
 };

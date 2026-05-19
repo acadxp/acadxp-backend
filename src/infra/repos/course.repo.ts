@@ -51,6 +51,37 @@ const deleteCourse = async (id: string) => {
   });
 };
 
+const getChallengeById = async (challengeId: string, acadInfoId: string) => {
+  const challenge = await prisma.challenge.findUnique({
+    where: { id: challengeId },
+    include: {
+      students: {
+        where: { academicInfoId: acadInfoId },
+        take: 1,
+      },
+    },
+  });
+  return challenge;
+};
+
+const getChallengesByCourseId = async (courseId: string, acadInfoId: string) => {
+  const courseChallenges = await prisma.courseChallenge.findMany({
+    where: { courseId },
+    include: {
+      challenge: {
+        include: {
+          students: {
+            where: { academicInfoId: acadInfoId },
+            take: 1,
+          },
+        },
+      },
+    },
+    orderBy: { order: "asc" },
+  });
+  return courseChallenges;
+};
+
 export const CourseRepo = {
   createCourse,
   findByCourseCode,
@@ -58,4 +89,6 @@ export const CourseRepo = {
   findAllCourses,
   getById,
   deleteCourse,
+  getChallengeById,
+  getChallengesByCourseId,
 };

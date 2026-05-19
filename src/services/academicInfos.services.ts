@@ -1,4 +1,5 @@
 import { academicInfosRepos } from "../infra/repos/academicInfos.repo";
+import { profileRepo } from "../infra/repos/profile.repo";
 import { HttpError } from "../error/httpError";
 import type { createAcademicInfoSchema } from "../validation/academicInfos.schema";
 import type { z } from "zod";
@@ -6,7 +7,6 @@ import type { z } from "zod";
 type CreateAcademicInfoInput = z.infer<typeof createAcademicInfoSchema>;
 
 const createAcademicInfo = async (data: CreateAcademicInfoInput) => {
-  // Transform YYYY-MM-DD dates to ISO-8601 DateTime format
   const processedData = {
     ...data,
     ...(data.graduationDate && {
@@ -34,8 +34,37 @@ const getAcademicInfoByUserId = async (userId: string) => {
   return acadInfo;
 };
 
+const updateAcademicInfo = async (
+  userId: string,
+  data: {
+    institution?: string;
+    degree?: string;
+    major?: string;
+    semester?: string;
+    enrollmentStatus?: string;
+    graduationDate?: string;
+    enrolledDate?: string;
+  },
+) => {
+  const profile = await profileRepo.findProfileByUserId(userId);
+  if (!profile) {
+    throw new HttpError(404, "Profile not found");
+  }
+
+  const processedData: any = { ...data };
+  if (data.graduationDate) {
+    processedData.graduationDate = new Date(`${data.graduationDate}T00:00:00Z`);
+  }
+  if (data.enrolledDate) {
+    processedData.enrolledDate = new Date(`${data.enrolledDate}T00:00:00Z`);
+  }
+
+  return await academicInfosRepos.updateAcademicInfo(profile.id, processedData);
+};
+
 export const academicInfosService = {
   createAcademicInfo,
   getAcademicInfoByProfileId,
   getAcademicInfoByUserId,
+  updateAcademicInfo,
 };

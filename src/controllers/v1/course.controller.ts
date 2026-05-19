@@ -75,3 +75,16 @@ export const deleteCourseHandler = async (req: Request, res: Response) => {
   await CourseService.deleteCourse(data.courseId);
   return sendSuccessResponse(res, 200, "Course deleted successfully");
 };
+
+export const getChallengeByIdHandler = async (req: Request, res: Response) => {
+  const courseId = req.params.courseId!;
+  const challengeId = req.params.challengeId!;
+  const challenge = await CourseService.getChallenge(courseId, challengeId, req.user!.id);
+  return sendSuccessResponse(res, 200, "Challenge found", challenge);
+};
+
+export const getCourseChallengesHandler = async (req: Request, res: Response) => {
+  const courseId = req.params.courseId!;
+  const challenges = await CourseService.getChallenges(courseId, req.user!.id);
+  return sendSuccessResponse(res, 200, "Challenges retrieved", challenges);
+};

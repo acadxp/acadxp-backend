@@ -11,4 +11,7 @@ export type ISocials = Record<string, string>;
 export type IStoreRefreshToken = {
   userId: string;
   refreshToken: string;
+  deviceName?: string;
+  deviceType?: string;
+  ipAddress?: string;
 };

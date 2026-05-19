@@ -63,7 +63,14 @@ export const getAcademicInfo = async (req: Request, res: Response) => {
     academicInfo,
   });
 };
-/*
-export const updateAcademicInfo = async (req: Request, res: Response) => {};
-export const deleteAcademicInfo = async (req: Request, res: Response) => {};
-*/
+
+export const updateAcademicInfo = async (req: Request, res: Response) => {
+  const user = req.user;
+  const data = req.body;
+
+  const updated = await academicInfosService.updateAcademicInfo(user!.id, data);
+
+  return sendSuccessResponse(res, 200, "Academic info updated successfully", {
+    academicInfo: updated,
+  });
+};

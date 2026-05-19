@@ -41,6 +41,10 @@ model Account {
   refreshToken          String?
   expiresAt             DateTime?
   isRevoked             Boolean   @default(false)
+  deviceName            String?
+  deviceType            String?
+  ipAddress             String?
+  lastActiveAt          DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -67,6 +71,7 @@ model Profile{
   bio       String?
   location  String?
   socials   Json?
+  preferences Json?  @default("{\"theme\":\"system\",\"accentColor\":\"#4f46e5\"}")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -99,6 +104,7 @@ model AcademicInfo{
   xpEvents XPEvent[]
   badges StudentBadge[]
   notifications Notification[]
+  notificationPreferences NotificationPreference[]
   goals Goal[]
 
   user Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -373,15 +379,31 @@ model Goal {
   createdAt DateTime @default(now())
 }
 
+model NotificationPreference {
+  id              String         @id @default(cuid())
+  academicInfoId  String
+  type            NotificationType
+  enabled         Boolean        @default(true)
+
+  academicInfo    AcademicInfo   @relation(fields: [academicInfoId], references: [id], onDelete: Cascade)
+
+  @@unique([academicInfoId, type])
+  @@map("notification_preference")
+}
+
 model ApiKey{
   id String @id @unique @default(cuid())
   key String @unique
+  name String?
   userId String
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive Boolean @default(true)
+  lastUsedAt DateTime?
   createdAt DateTime @default(now())
   expiresAt DateTime?
 
   @@unique([key, userId])
+  @@map("api_key")
 }
 
 enum Role {

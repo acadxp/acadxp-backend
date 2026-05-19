@@ -254,7 +254,7 @@ const confirm = async (
       badges: createdBadges,
       blueprintStatus: newStatus,
     };
-  });
+  }, { timeout: 30000 });
 
   return result;
 };
