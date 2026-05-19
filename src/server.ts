@@ -16,7 +16,8 @@ const app = express();
 const PORT = process.env.PORT || 8001;
 
 const corsOption = {
-  origin: "http://localhost:3000",
+  // origin: "http://localhost:3000",
+  origin: "https://acadxp.vercel.app",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true,
   optionsSuccessStatus: 200,
