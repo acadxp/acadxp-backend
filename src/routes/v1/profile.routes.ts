@@ -3,6 +3,7 @@ import {
   getUserProfile,
   createUserProfile,
   updateUserProfile,
+  updateUserName,
   checkUsername,
 } from "../../controllers/v1/profile.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
@@ -26,6 +27,11 @@ ProfileRoutes.patch(
   "/profile",
   asyncHandler(authMiddleware),
   asyncHandler(updateUserProfile),
+);
+ProfileRoutes.patch(
+  "/name",
+  asyncHandler(authMiddleware),
+  asyncHandler(updateUserName),
 );
 
 export default ProfileRoutes;

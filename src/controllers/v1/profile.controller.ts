@@ -58,8 +58,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   const { name, username, bio, location, socials, preferences } = req.body;
 
   if (username) {
-    const exists = await profileService.isUsernameAlreadyUsed(username);
-    if (exists) {
+    const existing = await profileService.isUsernameAlreadyUsed(username);
+    if (existing && existing.userId !== user!.id) {
       return sendErrorResponse(res, 409, "Username already exists");
     }
   }
@@ -76,6 +76,19 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   return sendSuccessResponse(res, 200, "Profile updated successfully", {
     profile: updated,
   });
+};
+
+export const updateUserName = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { name } = req.body;
+
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return sendErrorResponse(res, 400, "Name is required");
+  }
+
+  await profileService.updateUserName(user!.id, name.trim());
+
+  return sendSuccessResponse(res, 200, "Name updated successfully");
 };
 
 export const checkUsername = async (req: Request, res: Response) => {

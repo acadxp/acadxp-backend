@@ -8,9 +8,8 @@ const getUserProfile = async (userId: string): Promise<Profile | null> => {
   return userProfile;
 };
 
-const isUsernameAlreadyUsed = async (username: string): Promise<boolean> => {
-  const usernameExists = await profileRepo.findByUsername(username);
-  return !!usernameExists;
+const isUsernameAlreadyUsed = async (username: string): Promise<Profile | null> => {
+  return await profileRepo.findByUsername(username);
 };
 
 const createUserProfile = async (profileData: IProfile) => {
@@ -44,9 +43,17 @@ const updateUserProfile = async (
   return await profileRepo.findProfileByUserId(userId);
 };
 
+const updateUserName = async (userId: string, name: string) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { name },
+  });
+};
+
 export const profileService = {
   getUserProfile,
   isUsernameAlreadyUsed,
   createUserProfile,
   updateUserProfile,
+  updateUserName,
 };
