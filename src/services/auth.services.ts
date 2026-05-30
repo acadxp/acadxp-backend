@@ -77,8 +77,6 @@ const loginUser = async (
     role: user.role,
   });
 
-  await userRepos.revokeRefreshToken(user.id);
-
   await userRepos.storeRefreshToken({
     userId: user.id,
     refreshToken,
@@ -120,7 +118,7 @@ const refreshAccessToken = async (refreshToken: string, device?: DeviceInfo) => 
     role: user.role,
   });
 
-  await userRepos.revokeRefreshToken(user.id);
+  await userRepos.deleteRefreshToken(refreshToken);
 
   await userRepos.storeRefreshToken({
     userId: user.id,
